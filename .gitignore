@@ -1,0 +1,58 @@
+# Dependencies and generated output at every workspace depth
+node_modules/
+dist/
+build/
+.next/
+.next-profiles/
+out/
+coverage/
+.nyc_output/
+.turbo/
+*.tsbuildinfo
+next-env.d.ts
+
+# Local configuration and credentials; keep reviewed examples
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+credentials.json
+service-account*.json
+
+# The user will remove child lockfiles and generate the root lockfile manually
+/apps/*/package-lock.json
+/plugins/*/package-lock.json
+/packages/*/package-lock.json
+
+# Runtime storage and real data do not belong in source control
+.data/
+local-data/
+customer-data/
+uploads/
+backups/
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.dump
+*.backup
+/infrastructure/postgres/data/
+/infrastructure/redis/data/
+/infrastructure/storage/data/
+
+# Logs, caches, local editors and operating system files
+*.log
+logs/
+*.pid
+*.pid.lock
+.cache/
+.tmp/
+.temp/
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.vercel/
