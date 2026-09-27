@@ -2,6 +2,14 @@
 
 These diagrams distinguish the scaffolds currently present from intended service communication. Mermaid renders in compatible Markdown viewers.
 
+## Global architecture — target design
+
+![Amani IA — Global architecture and service communication](./01-global-architecture.png)
+
+The PNG is an **overview of the intended architecture**, not proof that the shown connections are already working. It shows the three Next.js frontends, NestJS Gateway, Core Platform, AI Orchestrator, five independent Plugin APIs, planned workers, and shared infrastructure. Each service is separately deployable within the npm monorepo; plugin activation is per organization, not one container per customer. API-to-API calls will need authenticated, verifiable user and organization context. The diagrams below distinguish implemented scaffolds from the proposed integrations.
+
+> The PNG is a visual reference. Its arrows are conceptual; the Mermaid diagrams below are the maintainable specification of implementation status and intended authorization flow. Actual local ports are listed in the current-repository diagram.
+
 ## Current repository
 
 The nodes below represent initialized code or prepared configuration. There are deliberately no runtime communication edges: service clients and business integrations have not been implemented.
