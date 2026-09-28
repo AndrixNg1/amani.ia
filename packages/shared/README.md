@@ -1,21 +1,71 @@
-# Shared utilities
+# @amani/shared
 
-Status: documentation placeholder; this directory has no package manifest or implementation and is not yet an initialized npm workspace.
+Status: Phase 1 tracing ID helpers and tests implemented. No application consumes
+them yet. The package intentionally stays small.
 
-## Purpose and technology
+## Responsibilities and usage
 
-Collect small, reusable utilities with clear ownership across projects. TypeScript is intended; build tooling and exports remain undecided.
+`createRequestId()` and `createCorrelationId()` generate UUID v4 values using
+`node:crypto.randomUUID()`. No UUID library or weak random fallback is introduced.
 
-## Responsibilities and relationships
+`isRequestId(value)` and `isCorrelationId(value)` accept 1–128 ASCII characters,
+starting with an alphanumeric character and continuing with alphanumerics, `.`,
+`_`, `-`. Safe non-UUID tracing IDs may be propagated. Arrays, spaces, control
+characters, Unicode and oversized inputs fail. `MAX_TRACE_ID_LENGTH` is 128.
+`resolveCorrelationId(value)` preserves valid input or replaces it with a UUID,
+without echoing rejected input.
 
-Share domain-neutral helpers without creating hidden service dependencies or bypassing resource authorization. Keep service-specific business behavior in its owning service. Apps, Plugin APIs, and future workers may explicitly depend on utilities once a package is initialized.
+```ts
+import { createRequestId, resolveCorrelationId } from '@amani/shared';
 
-## Environment and development
+function tracingForRequest(untrustedCorrelationHeader: unknown) {
+  return {
+    requestId: createRequestId(),
+    correlationId: resolveCorrelationId(untrustedCorrelationHeader),
+  };
+}
+```
 
-No environment variables, dependencies, build configuration, or development commands are defined. If initialized later, the package name should be `@amani/shared`. Initialize its manifest and scripts deliberately before invoking workspace commands.
+Generate a request ID per request; propagate a correlation ID through the request
+chain. Header extraction and framework integration belong to the service.
 
-## Tests
+These are **format checks, not authentication or authorization**. Tracing IDs must
+not act as credentials, access grants or idempotency guarantees. A valid ID can
+still be externally chosen. Callers decide whether their trust boundary preserves
+it or generates a new one; never put secrets/customer content in IDs.
 
-No tests or runner exist. Add checks for the package's public behavior when implementation begins; the current root checks do not validate this placeholder.
+## Dependencies and non-responsibilities
 
-See [shared package boundaries](../README.md) and the [architecture overview](../../docs/architecture/README.md).
+Only `@amani/types`, imported for branded ID types, plus Node crypto at runtime.
+Development dependencies explicitly declare TypeScript, ESLint, Jest and Node types.
+
+No authorization logic, roles, repositories, ORM, plugin logic, Nest modules,
+frontend components, AI orchestration, event bus or broad utility collection.
+Common error helpers can be added when real consumers justify them; no speculative
+error hierarchy is introduced.
+
+## Validation
+
+```bash
+npm run build --workspace=@amani/shared
+npm run typecheck --workspace=@amani/shared
+npm run lint:check --workspace=@amani/shared
+npm run test --workspace=@amani/shared -- --runInBand
+```
+
+The build references `types` and builds it first. Source mappings support checks
+before installation creates npm links. Tests build first, exercise emitted code,
+check hostile/oversized IDs, propagation, UUID generation and CommonJS/ESM exports.
+Compiler fixtures verify narrowing and request/correlation ID distinctions.
+
+The boundary suite inspects all four Phase 1 manifests and source imports, rejects
+undeclared/cross-service dependencies, checks graph cycles and keeps SDK/prompts/UI
+uninitialized. These are static development checks, not service security tests.
+
+## Future integration
+
+Gateway, APIs, plugins and future Node workers may adopt these helpers explicitly
+in later phases. No framework integration is included now.
+See [package setup](../README.md),
+[ADR-0005](../../docs/architecture/adr/0005-backend-sync-communication.md) and
+[ADR-0028](../../docs/architecture/adr/0028-observability-resilience-secrets.md).
