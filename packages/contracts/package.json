@@ -1,0 +1,37 @@
+{
+  "name": "@amani/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -p tsconfig.check.json",
+    "lint": "eslint . --max-warnings=0",
+    "lint:check": "eslint . --max-warnings=0",
+    "test:types": "tsc -p tsconfig.check.json"
+  },
+  "dependencies": {
+    "@amani/types": "0.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "eslint": "9.39.5",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.70.1"
+  },
+  "engines": {
+    "node": ">=22.17.0 <23"
+  }
+}
