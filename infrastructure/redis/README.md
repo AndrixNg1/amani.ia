@@ -1,12 +1,15 @@
 # Redis
 
-Status: local Redis configuration prepared; no clients, caches, business keys, queue
-library or workers are implemented. Runtime verification is **NOT RUN** in this phase.
+Status: the owner started Redis and its authenticated healthcheck reached healthy.
+Docker reports the corrected host binding `127.0.0.1:16379->6379/tcp`. Application
+client operations and persistence checks remain **NOT RUN**.
+No clients, caches, business keys, queue library or workers are implemented.
 
 ## Local service
 
 Compose uses `redis:7.4-alpine`, published on `127.0.0.1:6379`, attached to the internal
-`dependencies` network. `REDIS_PORT` controls the host port; `REDIS_HOST` is a host-client
+`dependencies` network and the non-internal `host_access` bridge for port publication.
+`REDIS_PORT` controls the host port; `REDIS_HOST` is a host-client
 hint. `REDIS_PASSWORD` is a required, server-only local bootstrap credential.
 A shared password is not service isolation: per-service ACLs and TLS remain planned.
 

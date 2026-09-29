@@ -1,8 +1,10 @@
 # PostgreSQL and pgvector
 
-Status: infrastructure bootstrap and owner-run read-only verification prepared.
-SQL execution, actual grants/password authentication and persistence have **NOT RUN**
-in this phase. No business tables, migrations, RAG or application client are added.
+Status: owner-run recovery and verification passed on 2026-09-29: pgvector 0.8.6,
+six owned schemas, catalog privilege/default-grant checks, and six TCP login and
+wrong-password rejection checks. The validated local host port is 15432. Persistence
+and business/tenant query tests remain **NOT RUN**. No business tables, migrations,
+RAG or application client are added.
 
 ## VS Code SQL dialect
 
@@ -77,7 +79,8 @@ RLS unless separately forced. Tenant columns, guards and policies remain unimple
 Compose uses `pgvector/pgvector:0.8.6-pg17-bookworm`, loopback host port 5432,
 `postgres_data:/var/lib/postgresql/data` and a read-only init-directory mount.
 `POSTGRES_PORT` changes the host port; `POSTGRES_HOST` is a connection hint only.
-All seven PostgreSQL passwords must be nonempty and distinct. Admin/database names
+All seven PostgreSQL passwords must be nonempty and distinct. `infra:check:local`
+checks this before `infra:up` starts Docker, without displaying the values. Admin/database names
 must be simple SQL identifiers (letters/digits/underscore, max 63, not starting
 with a digit); reserve `postgres`, `template0`, `template1` for administration.
 
@@ -130,6 +133,41 @@ automatic migration, ownership takeover, password reset or volume deletion is pr
 Use a separately named disposable Compose project for a truly fresh development
 instance only after checking port conflicts; do not discard the existing volume.
 
+## Recover a first-init password preflight failure
+
+The owner completed this recovery successfully on 2026-09-29. It does not need to
+be repeated for an already verified database; retain the procedure for this specific
+first-start failure on other local setups.
+
+This procedure applies only when the first startup logs show `001-vector.sql`
+committed successfully, then `002-service-isolation.sh` stopped with
+`every administrator/service password must be distinct` before its SQL client call.
+The database/admin and extension exist, but the six service roles have not been
+created. Do not remove the volume or change `POSTGRES_PASSWORD`: that administrator
+password is already stored in PostgreSQL.
+
+Give the six service password variables distinct values in `.env`, preserving the
+administrator credentials. In the observed local failure, only these six values
+were regenerated; no database password was changed by the repair itself.
+
+Run these owner commands one at a time from the root, stopping on any error:
+
+```bash
+npm run infra:check:local
+npm run infra:up
+docker compose exec -T postgres bash /docker-entrypoint-initdb.d/002-service-isolation.sh
+npm run infra:verify:postgres
+npm run infra:status
+```
+
+`infra:up` recreates containers with corrected environment/network settings and
+preserves named volumes. PostgreSQL skips first-init scripts because PGDATA already
+exists; the explicit shell command completes only the missing service-role step in
+one transaction. Expected: ownership bootstrap completed, verification PASS, and
+three healthy services with host mappings beginning `127.0.0.1:`. This is an explicit
+recovery for the logged preflight failure, not a general migration/password-rotation
+command for databases with existing service roles or business data.
+
 ## Owner-run verification
 
 Before startup, `npm run infra:test` runs seven tests of the shell preflight/error
@@ -147,7 +185,8 @@ administrator, checking six role/schema owners, forbidden memberships/privileges
 PUBLIC/default grants and pgvector location/version. It then logs in over TCP using
 each service's environment password, checks its identity/default schema, and confirms
 a deliberately wrong password is rejected. No data is written and no test table is
-created. Exit 0 plus PASS messages is expected; this phase has not executed it.
+created. Exit 0 plus PASS messages is expected and was confirmed in the owner's
+2026-09-29 validation output.
 
 The Compose `pg_isready` probe only means PostgreSQL accepts connections; it does
 not prove authentication, initialization success or correct service isolation. Future

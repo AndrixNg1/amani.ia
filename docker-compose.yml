@@ -6,7 +6,7 @@ services:
     image: pgvector/pgvector:0.8.6-pg17-bookworm
     # Explicit manual restart: a failed first initialization must stay visible.
     restart: "no"
-    networks: [dependencies]
+    networks: [dependencies, host_access]
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-amani}
       POSTGRES_USER: ${POSTGRES_USER:-amani}
@@ -35,7 +35,7 @@ services:
   redis:
     image: redis:7.4-alpine
     restart: "no"
-    networks: [dependencies]
+    networks: [dependencies, host_access]
     command:
       - redis-server
       - --appendonly
@@ -69,7 +69,7 @@ services:
       context: ./infrastructure/storage/minio
     pull_policy: build
     restart: "no"
-    networks: [dependencies]
+    networks: [dependencies, host_access]
     command: ["server", "/data", "--console-address", ":9001"]
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Set MINIO_ROOT_USER in the root .env}
@@ -95,3 +95,10 @@ networks:
   dependencies:
     driver: bridge
     internal: true
+  # Docker does not publish ports for containers attached only to internal bridges.
+  # This bridge enables host access; explicit service bindings remain loopback-only.
+  host_access:
+    driver: bridge
+    internal: false
+    driver_opts:
+      com.docker.network.bridge.host_binding_ipv4: "127.0.0.1"

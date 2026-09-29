@@ -28,7 +28,7 @@ for ((i = 0; i < ${#password_names[@]}; i++)); do
     first="${password_names[i]}"
     second="${password_names[j]}"
     if [[ "${!first}" == "${!second}" ]]; then
-      printf 'PostgreSQL bootstrap: every administrator/service password must be distinct.\n' >&2
+      printf 'PostgreSQL bootstrap: every administrator/service password must be distinct (%s and %s match).\n' "$first" "$second" >&2
       exit 1
     fi
   done

@@ -78,6 +78,7 @@ test('reusing credentials between services is rejected without displaying values
     assert.equal(result.status, 1);
     assert.equal(args, null);
     assert.match(result.stderr, /must be distinct/);
+    assert.match(result.stderr, /POSTGRES_PASSWORD and KNOWLEDGE_DB_PASSWORD match/);
     assert.doesNotMatch(result.stderr, /synthetic-secret/);
   });
 });

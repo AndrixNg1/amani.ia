@@ -123,6 +123,7 @@ if [ ! -f .env ]; then (umask 077; cp .env.example .env); fi
 chmod 600 .env
 npm run infra:config
 npm run infra:check
+npm run infra:check:local
 docker compose config --quiet
 # Owner-run only, after reviewing existing-volume handling:
 npm run infra:up
@@ -133,11 +134,16 @@ npm run infra:logs
 
 `infra:config` validates the example without needing local secrets. To validate your
 actual local values, run `docker compose config --quiet`. Infrastructure listens on
-loopback: PostgreSQL `5432`, Redis `6379`, MinIO API `9000`, MinIO console `9001`.
+loopback, with defaults PostgreSQL `5432`, Redis `6379`, MinIO API `9000`, MinIO
+console `9001`. The validated local setup uses PostgreSQL `15432` and Redis `16379`
+through `.env` overrides to avoid existing host listeners.
 Named volumes persist across `npm run infra:down`; that command does not erase data.
 See the component READMEs for credentials, health probes and pgvector verification.
-Containers have not been started during preparation. The local network is explicitly
-internal and container restart is manual so initialization failures remain visible.
+Startup is owner-run. Services share an internal dependency network and a separate
+bridge for publishing loopback host ports. The latter permits outbound traffic.
+Container restart is manual so initialization failures remain visible. `infra:up`
+checks the real `.env` first, including distinct PostgreSQL service/admin passwords.
+See the [infrastructure guide](infrastructure/README.md) for runtime validation status.
 
 MinIO is built automatically from pinned official sources by `infra:up`; its former
 prebuilt image is unavailable. The first build needs Internet access and can take
@@ -151,8 +157,9 @@ volumes are not migrated by a restart or a changed `.env`. In particular, the ea
 `public.vector` setup needs a reviewed migration. See the
 [PostgreSQL instructions](infrastructure/postgres/README.md) before using an existing
 volume, and the [infrastructure guide](infrastructure/README.md) for exact Redis/MinIO
-checks and expected results. Runtime initialization and isolation remain unverified
-until the owner runs those checks. Shared bootstrap/admin credentials are not for apps.
+checks and expected results. The owner validated initialization, schema privilege
+boundaries and service authentication on 2026-09-29; business/tenant authorization
+and persistence tests remain future work. Shared bootstrap/admin credentials are not for apps.
 
 Start the desired application in a separate terminal with a command from the
 workspace table. `npm run dev` starts only Gateway; it does not launch the whole

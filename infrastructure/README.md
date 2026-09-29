@@ -1,13 +1,31 @@
 # Infrastructure — Phase 2
 
-Status: local infrastructure configuration and bootstrap/verification scripts are
-prepared. Static checks were run; no images were pulled, containers started or SQL
-executed in this phase. No application, plugin or worker was implemented.
+Status: Phase 2 local foundation validated on 2026-09-29. The owner built MinIO,
+started all three dependencies, completed PostgreSQL recovery and passed the
+service-role verification. No application, plugin or worker was implemented.
+
+## Recorded local validation
+
+- **PASS**: example/local configuration checks and seven shell-boundary tests.
+- **PASS**: MinIO image compilation; PostgreSQL, Redis and MinIO all healthy.
+- **PASS**: pgvector 0.8.6 in `extensions`, six owned service schemas, catalog
+  privilege/default-grant checks and six TCP login/wrong-password rejection checks.
+- **PASS**: host mappings reported on loopback: PostgreSQL 15432, Redis 16379,
+  MinIO API 9000 and Console 9001. Both MinIO health endpoints returned HTTP 200
+  from the host.
+- **NOT RUN**: business/tenant queries, object authorization and upload/download,
+  persistence across restart, backup/restore and production deployment checks.
+
+The owner-supplied terminal output confirms the startup and PostgreSQL results;
+the MinIO host probes were checked separately. `NOT RUN by this static check` in
+`infra:check` describes that command's scope, not the overall validation status.
 
 ## Local topology
 
 The root [docker-compose.yml](../docker-compose.yml) is the single entry point.
 Applications will run on the host via npm; Compose contains dependencies only.
+The table lists default ports. The validated local `.env` overrides PostgreSQL to
+15432 and Redis to 16379 because 5432/6379 were already occupied on that machine.
 
 | Service | Image | Host address | Persistent volume | Probe |
 | --- | --- | --- | --- | --- |
@@ -15,12 +33,14 @@ Applications will run on the host via npm; Compose contains dependencies only.
 | Redis | `redis:7.4-alpine` | `127.0.0.1:6379` | `redis_data` | Authenticated `PING` |
 | MinIO | Local build: `amani-ia/minio:RELEASE.2025-10-15T17-29-55Z-local` | API `127.0.0.1:9000`, Console `127.0.0.1:9001` | `minio_data` | HTTP `/minio/health/live` |
 
-All three attach only to the Compose-managed `dependencies` bridge with
-`internal: true`. It isolates container egress; published host ports stay loopback
-only. Internal networking is not authentication. Host clients use the addresses
-above; future network-attached containers use `postgres:5432`, `redis:6379`,
-`http://minio:9000`. Ports and network reachability still require runtime validation.
-See [Docker network options](https://docs.docker.com/reference/compose-file/networks/).
+All three attach to the Compose-managed internal `dependencies` bridge and the
+non-internal `host_access` bridge. Docker did not publish ports when services had
+only an internal network; the second bridge enables host port mapping. Every port
+binding remains explicitly `127.0.0.1`, also the bridge's default binding address.
+This topology permits outbound traffic through `host_access`; it does not claim
+global egress isolation. Internal networking is not authentication. Host clients use
+the addresses above; containers on these networks use `postgres:5432`, `redis:6379`,
+`http://minio:9000`. See [Docker port publishing](https://docs.docker.com/engine/network/port-publishing/).
 
 `restart: "no"` is intentional for local development: containers start/restart only
 when the owner asks, and initialization failure stays visible. Automatically
@@ -67,6 +87,7 @@ if [ ! -f .env ]; then (umask 077; cp .env.example .env); fi
 chmod 600 .env
 npm run infra:config
 npm run infra:check
+npm run infra:check:local
 npm run infra:test
 docker compose config --quiet
 # Optional explicit first build; infra:up also builds MinIO automatically.
@@ -85,6 +106,12 @@ verification prints six owned schemas, pgvector in `extensions`, and six success
 login/wrong-password checks; Redis returns `PONG`; MinIO probes return HTTP 200
 (often with an empty body). The Console is at `http://127.0.0.1:9001` by default.
 In-container probes above also work when published host ports are changed.
+
+`infra:up` runs `infra:check:local` before Docker starts anything. This validates the
+actual root `.env`, including distinct administrator/service PostgreSQL passwords,
+without displaying credential values. `infra:check` continues to check the public
+example. In `infra:status`, expect mappings such as `127.0.0.1:9001->9001/tcp`;
+bare `9001/tcp` is only an exposed container port, not a published host connection.
 
 The first MinIO build needs Internet access and can take several minutes to fetch
 the build images, official source and Go modules. Go runs inside the builder image;

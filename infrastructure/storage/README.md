@@ -2,13 +2,16 @@
 
 Status: local API/Console, healthcheck and persistent volume configured. No buckets,
 service accounts, policies, uploads, customer documents or storage clients are created.
-Runtime health, credentials and object permissions are **NOT RUN** in this phase.
+The owner built the image and its in-container healthcheck reached healthy. Both
+host API health endpoints returned HTTP 200, and Docker reports loopback mappings
+on 9000/9001. Console login and object permissions/operations remain unverified.
 
 ## Configuration
 
 The root Compose service `minio` builds the local image
 `amani-ia/minio:RELEASE.2025-10-15T17-29-55Z-local`, with `minio_data:/data`, internal
-`dependencies` networking and manual restart behavior. Host ports are loopback-only:
+`dependencies` networking plus a non-internal `host_access` bridge for host port
+publication, and manual restart behavior. Host ports are loopback-only:
 API 9000 and Console 9001, configurable with `MINIO_API_PORT`/`MINIO_CONSOLE_PORT`.
 `MINIO_ENDPOINT=http://127.0.0.1:9000` documents the host-side endpoint; update this
 hint when changing the API port. Future containers use `http://minio:9000`.
@@ -59,9 +62,9 @@ Debian package repositories. No Go/Redis/MinIO installation on the host is requi
 To prefetch PostgreSQL and Redis separately, use `docker compose pull postgres redis`.
 Do not try `docker pull amani-ia/minio:...-local`: that name is a local build output.
 
-Source/tag and base-image metadata checks do not prove the image builds or starts.
-Full image construction and runtime checks remain **NOT RUN** during preparation;
-the owner executes the commands above. Base images/packages are not fully pinned
+The owner completed the full image build and MinIO's in-container healthcheck passed.
+Host API health probes also passed; object operations remain unverified.
+Base images/packages are not fully pinned
 by digest, so this is not a claim of bit-for-bit reproducible or production-ready builds.
 
 ## Future storage conventions
