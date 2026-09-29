@@ -1,21 +1,59 @@
 # Redis
 
-Redis is the planned backend cache and asynchronous work dependency. The local `redis:7.4-alpine` container enables append-only persistence in the `redis_data` volume and requires a password. No queue library, workers, cache namespaces or Redis clients are integrated yet.
+Status: local Redis configuration prepared; no clients, caches, business keys, queue
+library or workers are implemented. Runtime verification is **NOT RUN** in this phase.
 
-## Environment and development
+## Local service
 
-Configure required `REDIS_PASSWORD` and optional `REDIS_PORT` (default `6379`) in the root `.env`. Redis is reachable at `127.0.0.1:6379` from host processes; future Compose clients use `redis:6379`. Future client URLs must encode any reserved characters in the password. These settings do not configure application clients automatically.
+Compose uses `redis:7.4-alpine`, published on `127.0.0.1:6379`, attached to the internal
+`dependencies` network. `REDIS_PORT` controls the host port; `REDIS_HOST` is a host-client
+hint. `REDIS_PASSWORD` is a required, server-only local bootstrap credential.
+A shared password is not service isolation: per-service ACLs and TLS remain planned.
 
-Run from the repository root after preparing `.env`:
+`redis_data` stores AOF data. Persistence is retained because future coordination and
+job metadata should survive an ordinary local container restart, not just cache use.
+AOF uses `appendfsync everysec`; RDB schedules are disabled to avoid two independent
+local persistence mechanisms. Around one second of writes can be lost on a crash;
+this is not a durable broker or a backup guarantee. See
+[Redis persistence](https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/).
+
+`maxmemory-policy noeviction` prevents eviction policy from silently deleting future
+job keys. TTL expiration remains available; a memory budget, quotas, and separation
+of cache/queue workloads must be decided with real workloads. The policy alone does
+not limit memory. No production resource limits or delivery guarantees are claimed.
+
+## Future key conventions
+
+- Service-only state: `amani:<service>:<purpose>:<identifier>`.
+- Tenant-sensitive state: `amani:<service>:<organizationId>:<purpose>:<identifier>`.
+- Permission-sensitive results additionally include bounded user/resource/policy
+  version scope as appropriate, plus an explicit TTL and revocation strategy.
+
+Examples are naming conventions only; no keys are created. Use canonical opaque
+identifiers and unambiguous escaping for separators. Prefixes are not access control.
+Every client must validate organization/permissions before reading or writing and
+must not fall back to a default tenant. Exclude raw documents, tokens and credentials
+from keys/logs and avoid unconstrained customer content in queue payloads.
+
+## Node/Python constraint
+
+No BullMQ integration is implemented. A future Python Data Engine must not read
+BullMQ's internal Redis structures or be assumed compatible with a NestJS worker.
+ADR-0006/0024 require an explicit versioned contract: authenticated internal HTTP,
+a genuinely interoperable messaging protocol, or another separately selected
+mechanism. Job idempotency, retries, expiration and reauthorization are future work.
+
+## Owner commands and expected results
+
+Start the stack only through the owner workflow in [infrastructure](../README.md).
+Once Redis is running, this read-only command must return `PONG`:
 
 ```bash
-docker compose up -d --wait redis
-docker compose logs --tail=100 redis
-docker compose exec redis sh -c 'REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli ping'
+docker compose exec -T redis sh -c 'REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli ping'
 ```
 
-The last command must print `PONG`; the Compose healthcheck also requires that exact response. This verifies basic authenticated responsiveness, not queue processing or data durability. There are no automated cache or queue tests yet, and runtime validation remains pending.
-
-Redis is for trusted backend callers. The [Redis security documentation](https://redis.io/docs/latest/operate/oss_and_stack/management/security/) describes password authentication and the need to restrict network access. This local configuration binds the host port to loopback and uses a shared development password; fine-grained ACLs and TLS are not configured. Keep production credentials and customer data out of this local instance.
-
-Future cache keys and jobs must carry validated organization and permission context. Workers must re-check access before processing data, and cached responses must not cross tenant or user permission boundaries. See [infrastructure overview](../README.md) for persistence and lifecycle commands.
+The healthcheck requires the same authenticated response; it does not test jobs,
+durability or cache isolation. `npm run infra:logs` shows local diagnostics, and
+`npm run infra:down` preserves `redis_data`. Do not use FLUSHALL or delete volumes as
+a routine verification step. Keep host access restricted; see
+[Redis security](https://redis.io/docs/latest/operate/oss_and_stack/management/security/).

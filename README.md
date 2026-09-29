@@ -113,14 +113,22 @@ validation after your installation.
 ## Local development
 
 Copy `.env.example` to `.env` if it does not already exist, then replace the local
-credential placeholders. The root environment file configures Compose only.
+credential placeholders. If `.env` exists, merge the six new service database password
+variables manually. The root environment file configures Compose only; applications
+must eventually receive only their own server-side credentials.
 
 ```bash
-cp -n .env.example .env
-# Edit .env and choose local credentials before starting services.
+if [ ! -f .env ]; then (umask 077; cp .env.example .env); fi
+# Edit .env: merge missing keys and choose distinct local passwords.
+chmod 600 .env
 npm run infra:config
+npm run infra:check
+docker compose config --quiet
+# Owner-run only, after reviewing existing-volume handling:
 npm run infra:up
 npm run infra:status
+npm run infra:verify:postgres
+npm run infra:logs
 ```
 
 `infra:config` validates the example without needing local secrets. To validate your
@@ -128,7 +136,17 @@ actual local values, run `docker compose config --quiet`. Infrastructure listens
 loopback: PostgreSQL `5432`, Redis `6379`, MinIO API `9000`, MinIO console `9001`.
 Named volumes persist across `npm run infra:down`; that command does not erase data.
 See the component READMEs for credentials, health probes and pgvector verification.
-Containers have not been started during preparation.
+Containers have not been started during preparation. The local network is explicitly
+internal and container restart is manual so initialization failures remain visible.
+
+On a fresh PostgreSQL volume, bootstrap prepares six service-owned schemas/logins
+and an admin-owned pgvector namespace; it creates no business tables. Existing
+volumes are not migrated by a restart or a changed `.env`. In particular, the earlier
+`public.vector` setup needs a reviewed migration. See the
+[PostgreSQL instructions](infrastructure/postgres/README.md) before using an existing
+volume, and the [infrastructure guide](infrastructure/README.md) for exact Redis/MinIO
+checks and expected results. Runtime initialization and isolation remain unverified
+until the owner runs those checks. Shared bootstrap/admin credentials are not for apps.
 
 Start the desired application in a separate terminal with a command from the
 workspace table. `npm run dev` starts only Gateway; it does not launch the whole
@@ -177,6 +195,8 @@ Static checks that do not require dependency installation:
 ```bash
 npm run check:structure
 npm run infra:config
+npm run infra:check
+npm run infra:test
 ```
 
 After the manual installation, validate the actual monorepo dependency resolution:
