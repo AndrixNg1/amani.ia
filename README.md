@@ -139,6 +139,12 @@ See the component READMEs for credentials, health probes and pgvector verificati
 Containers have not been started during preparation. The local network is explicitly
 internal and container restart is manual so initialization failures remain visible.
 
+MinIO is built automatically from pinned official sources by `infra:up`; its former
+prebuilt image is unavailable. The first build needs Internet access and can take
+several minutes. To build it separately, run `docker compose build minio`.
+Go and MinIO do not need to be installed on the host; see the
+[storage guide](infrastructure/storage/README.md).
+
 On a fresh PostgreSQL volume, bootstrap prepares six service-owned schemas/logins
 and an admin-owned pgvector namespace; it creates no business tables. Existing
 volumes are not migrated by a restart or a changed `.env`. In particular, the earlier

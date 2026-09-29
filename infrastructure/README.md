@@ -13,7 +13,7 @@ Applications will run on the host via npm; Compose contains dependencies only.
 | --- | --- | --- | --- | --- |
 | PostgreSQL | `pgvector/pgvector:0.8.6-pg17-bookworm` | `127.0.0.1:5432` | `postgres_data` | `pg_isready` |
 | Redis | `redis:7.4-alpine` | `127.0.0.1:6379` | `redis_data` | Authenticated `PING` |
-| MinIO | `minio/minio:RELEASE.2025-09-07T16-13-09Z` | API `127.0.0.1:9000`, Console `127.0.0.1:9001` | `minio_data` | HTTP `/minio/health/live` |
+| MinIO | Local build: `amani-ia/minio:RELEASE.2025-10-15T17-29-55Z-local` | API `127.0.0.1:9000`, Console `127.0.0.1:9001` | `minio_data` | HTTP `/minio/health/live` |
 
 All three attach only to the Compose-managed `dependencies` bridge with
 `internal: true`. It isolates container egress; published host ports stay loopback
@@ -26,7 +26,9 @@ See [Docker network options](https://docs.docker.com/reference/compose-file/netw
 when the owner asks, and initialization failure stays visible. Automatically
 restarting PostgreSQL after failed first-time initialization can hide a partial
 setup. No application containers, proxy, monitoring stack or destructive reset
-script are added. Images retain the existing tags, not digest pins.
+script are added. PostgreSQL/Redis retain their image tags. MinIO is built locally
+from pinned official sources because the earlier prebuilt image cannot be fetched.
+See [MinIO build details](storage/README.md). No service is installed on the host.
 
 ## Environment and credentials
 
@@ -67,6 +69,8 @@ npm run infra:config
 npm run infra:check
 npm run infra:test
 docker compose config --quiet
+# Optional explicit first build; infra:up also builds MinIO automatically.
+docker compose build minio
 npm run infra:up
 npm run infra:status
 npm run infra:verify:postgres
@@ -81,6 +85,10 @@ verification prints six owned schemas, pgvector in `extensions`, and six success
 login/wrong-password checks; Redis returns `PONG`; MinIO probes return HTTP 200
 (often with an empty body). The Console is at `http://127.0.0.1:9001` by default.
 In-container probes above also work when published host ports are changed.
+
+The first MinIO build needs Internet access and can take several minutes to fetch
+the build images, official source and Go modules. Go runs inside the builder image;
+no host Go/MinIO installation is needed. The build context excludes the root `.env`.
 
 `infra:test` runs seven shell-boundary tests using a fake `psql` in an isolated
 temporary directory. It checks preflight rejection and secret-safe failure handling,

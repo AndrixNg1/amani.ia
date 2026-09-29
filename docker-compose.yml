@@ -63,7 +63,11 @@ services:
       start_period: 10s
 
   minio:
-    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    # The upstream prebuilt image is unavailable; build official pinned sources.
+    image: amani-ia/minio:RELEASE.2025-10-15T17-29-55Z-local
+    build:
+      context: ./infrastructure/storage/minio
+    pull_policy: build
     restart: "no"
     networks: [dependencies]
     command: ["server", "/data", "--console-address", ":9001"]

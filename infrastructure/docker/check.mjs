@@ -43,6 +43,11 @@ for (const service of ['CORE_PLATFORM', 'KNOWLEDGE', 'DATA_ANALYTICS', 'CONVERSA
 }
 assert.ok(postgres.volumes.some((volume) => volume.type === 'bind' && volume.read_only
   && volume.target === '/docker-entrypoint-initdb.d'));
+const minio = model.services.minio;
+assert.equal(minio.pull_policy, 'build', 'MinIO must build locally instead of pulling the unavailable image');
+assert.equal(resolve(root, minio.build.context), resolve(root, 'infrastructure/storage/minio'),
+  'MinIO build context must exclude the root environment and application files');
+assert.ok(existsSync(resolve(minio.build.context, minio.build.dockerfile ?? 'Dockerfile')));
 console.log('PASS: Compose services, internal network, loopback ports, persistent volumes, healthchecks and credential configuration.');
 
 for (const script of ['infrastructure/postgres/init/002-service-isolation.sh', 'infrastructure/postgres/verify.sh']) {
@@ -56,4 +61,4 @@ for (const script of ['001-vector.sql', 'sql/bootstrap.sql', 'sql/service.sql'])
 const example = readFileSync(resolve(root, '.env.example'), 'utf8');
 assert.ok(example.includes('NEXT_PUBLIC_'), 'Document the browser credential boundary');
 console.log('PASS: shell syntax and initialization file layout.');
-console.log('NOT RUN: SQL execution, authentication/privilege enforcement, image startup and runtime healthchecks.');
+console.log('NOT RUN: image compilation, SQL execution, authentication/privilege enforcement, image startup and runtime healthchecks.');
