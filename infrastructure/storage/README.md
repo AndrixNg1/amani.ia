@@ -1,24 +1,109 @@
-# Object storage
+# MinIO / S3-compatible object storage
 
-MinIO supplies the S3-compatible local dependency planned for documents, uploads and generated artifacts. The `minio` Compose service persists objects in `minio_data`. Buckets, application service accounts, policies, upload flows and SDK integration are not implemented.
+Status: local API/Console, healthcheck and persistent volume configured. No buckets,
+service accounts, policies, uploads, customer documents or storage clients are created.
+The owner built the image and its in-container healthcheck reached healthy. Both
+host API health endpoints returned HTTP 200, and Docker reports loopback mappings
+on 9000/9001. Console login and object permissions/operations remain unverified.
 
-## Environment and development
+## Configuration
 
-The root `.env` requires `MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD` (at least eight characters). Optional `MINIO_API_PORT=9000` and `MINIO_CONSOLE_PORT=9001` control loopback host ports. Root credentials are local administrative bootstrap credentials; future applications need narrowly scoped credentials and private buckets.
+The root Compose service `minio` builds the local image
+`amani-ia/minio:RELEASE.2025-10-15T17-29-55Z-local`, with `minio_data:/data`, internal
+`dependencies` networking plus a non-internal `host_access` bridge for host port
+publication, and manual restart behavior. Host ports are loopback-only:
+API 9000 and Console 9001, configurable with `MINIO_API_PORT`/`MINIO_CONSOLE_PORT`.
+`MINIO_ENDPOINT=http://127.0.0.1:9000` documents the host-side endpoint; update this
+hint when changing the API port. Future containers use `http://minio:9000`.
 
-Run from the repository root after preparing `.env`:
+`MINIO_ROOT_USER` is the local administrative access key; `MINIO_ROOT_PASSWORD` is
+its secret key (at least eight characters). These credentials must never reach a
+browser, Next public variable, client bundle or ordinary service deployment. Future
+backends need service-scoped accounts and private bucket policies. Environment
+credentials remain inspectable by the local Docker administrator.
+
+## Local image build and unavailable upstream image
+
+The owner encountered `pull access denied` for the former Docker Hub image
+`minio/minio:RELEASE.2025-09-07T16-13-09Z`. A manifest lookup for that release on
+Quay also failed. The [upstream project](https://github.com/minio/minio#source-only-distribution)
+now documents source-only distribution, so changing credentials or repeatedly
+retrying the old image does not repair this dependency.
+
+[minio/Dockerfile](minio/Dockerfile) builds official MinIO sources at
+`RELEASE.2025-10-15T17-29-55Z` (commit
+`9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a`). This updates the former September
+release to the [October security release](https://github.com/minio/minio/releases/tag/RELEASE.2025-10-15T17-29-55Z),
+which fixes a service-account/STS policy bypass. Its pinned Go module version is
+`v0.0.0-20251015172955-9e49d5e7a648`; Go verifies modules through its checksum database.
+The builder uses Go 1.24.8 as declared by that release. The final Debian
+image contains the server, license notices, CA certificates and curl for healthchecks.
+No third-party MinIO binary or MinIO registry image is used.
+
+Compose's `pull_policy: build` builds this image instead of requesting the local
+tag from a registry. The context is only `infrastructure/storage/minio/` and excludes
+local files; the root `.env` and service credentials never enter the build.
+Credentials are supplied to the running service through Compose as before.
+
+After configuring `.env`, run from the repository root:
 
 ```bash
-docker compose up -d --wait minio
-docker compose logs --tail=100 minio
-curl --fail http://127.0.0.1:9000/minio/health/live
-curl --fail http://127.0.0.1:9000/minio/health/cluster
+npm run infra:check
+docker compose config --quiet
+docker compose build minio
+npm run infra:up
+npm run infra:status
 ```
 
-Open `http://127.0.0.1:9001` for the console. Host SDKs will use `http://127.0.0.1:9000`; future Compose clients use `http://minio:9000`. Adjust the manual URLs if overriding host ports. `localhost` inside a different container is not this service.
+The explicit build helps diagnose compilation separately; `infra:up` also builds
+MinIO automatically and reuses Docker's build cache. The first build can take several
+minutes and needs Internet access to Docker Hub, GitHub, Go module services and
+Debian package repositories. No Go/Redis/MinIO installation on the host is required.
+To prefetch PostgreSQL and Redis separately, use `docker compose pull postgres redis`.
+Do not try `docker pull amani-ia/minio:...-local`: that name is a local build output.
 
-The Compose probe checks HTTP liveness; `/minio/health/cluster` additionally checks write quorum. Neither proves that a bucket exists or that application credentials can upload and read objects. The [upstream healthcheck documentation](https://github.com/minio/minio/blob/master/docs/metrics/healthcheck/README.md) describes those distinctions. No automated S3 integration tests exist, and runtime checks remain pending.
+The owner completed the full image build and MinIO's in-container healthcheck passed.
+Host API health probes also passed; object operations remain unverified.
+Base images/packages are not fully pinned
+by digest, so this is not a claim of bit-for-bit reproducible or production-ready builds.
 
-The image tag `RELEASE.2025-09-07T16-13-09Z` is a dated release, not a digest pin. Its [release Dockerfile](https://github.com/minio/minio/blob/RELEASE.2025-09-07T16-13-09Z/Dockerfile.release) includes the `curl` executable used by the probe. The [upstream repository](https://github.com/minio/minio) is archived; this is a local development dependency, with future maintenance and production deployment decisions outstanding.
+## Future storage conventions
 
-Plugin APIs and workers will mediate object access using authenticated tenant and user context. Object names or organization prefixes alone are not authorization; APIs must check permissions before issuing scoped uploads, downloads or signed URLs. Never expose root credentials through frontend environment variables. See [infrastructure overview](../README.md) for lifecycle and persistence behavior.
+Reserve lowercase buckets by owner and purpose, such as `amani-knowledge-originals`,
+`amani-data-analytics-datasets`, `amani-data-analytics-exports` and
+`amani-evaluation-artifacts`. These are conventions, not provisioned resources.
+Do not give all plugins shared root credentials or write permission across buckets.
+
+Within a bucket, use a future path such as:
+
+```text
+organizations/<organizationId>/<resourceType>/<resourceId>/<version>/<artifact>
+```
+
+The organization/resource IDs must come from verified backend context. Paths and
+bucket names are **not authorization**: each upload, read, download, deletion and
+signed URL must be authorized by the owning backend. UI visibility is insufficient.
+Private bucket policies, short-lived downloads, MIME/size checks, retention,
+revocation, encryption, cleanup and backup/restore remain later implementation work.
+Original documents/datasets and generated exports/artifacts belong here; their
+business metadata and ACLs belong to the owning service's future PostgreSQL schema.
+
+## Owner verification
+
+After [manual stack startup](../README.md), these in-container checks require no
+credentials and create no objects. They work even with changed published ports:
+
+```bash
+docker compose exec -T minio curl --fail --silent --show-error http://127.0.0.1:9000/minio/health/live
+docker compose exec -T minio curl --fail --silent --show-error http://127.0.0.1:9000/minio/health/cluster
+```
+
+Expected: exit 0 and HTTP 200, usually an empty body. Liveness says the process
+responds; the cluster probe checks write quorum. Neither proves bucket permissions
+or successful upload/download. Open `http://127.0.0.1:9001` for the local Console
+(adjust the port if overridden). `npm run infra:down` preserves stored objects.
+
+The [MinIO repository](https://github.com/minio/minio) is archived. This local source
+build retains the selected storage technology; maintenance, supported production
+storage and digest/provenance review remain outstanding. No production support or
+security guarantee is inferred from the selected release.

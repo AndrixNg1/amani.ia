@@ -1,0 +1,2 @@
+# The Dockerfile fetches pinned upstream sources; no local files enter the image.
+**
