@@ -31,8 +31,9 @@ retrying the old image does not repair this dependency.
 `RELEASE.2025-10-15T17-29-55Z` (commit
 `9e49d5e7a648f00e26f2246f4dc28e6b07f8c84a`). This updates the former September
 release to the [October security release](https://github.com/minio/minio/releases/tag/RELEASE.2025-10-15T17-29-55Z),
-which fixes a service-account/STS policy bypass. The source archive is checksum
-verified; the builder uses Go 1.24.8 as declared by that release. The final Debian
+which fixes a service-account/STS policy bypass. Its pinned Go module version is
+`v0.0.0-20251015172955-9e49d5e7a648`; Go verifies modules through its checksum database.
+The builder uses Go 1.24.8 as declared by that release. The final Debian
 image contains the server, license notices, CA certificates and curl for healthchecks.
 No third-party MinIO binary or MinIO registry image is used.
 
