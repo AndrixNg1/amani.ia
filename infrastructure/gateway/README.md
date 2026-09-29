@@ -1,7 +1,23 @@
-# Gateway infrastructure placeholder
+# Gateway infrastructure boundary
 
-This directory reserves edge deployment configuration such as TLS termination, reverse proxy rules and network routing. It currently contains no executable configuration and no selected proxy technology. It is distinct from the implemented NestJS scaffold in [apps/gateway](../../apps/gateway/README.md), whose development port is `4000`.
+Status: documentation only. No reverse proxy, ingress, TLS configuration, extra
+container, port, credential or runtime test is introduced in this phase.
 
-There are no environment variables, development commands or tests for this directory yet. Run and validate the NestJS gateway through its application README. Dependency containers are described in [infrastructure](../README.md); Compose does not start an edge proxy.
+The NestJS API Gateway belongs to [apps/gateway](../../apps/gateway/README.md), whose
+starter development port is 4000. This directory is reserved for future edge
+infrastructure, never Gateway application modules, routing business logic or IAM.
+No application code was modified.
 
-Future edge infrastructure will route browser requests to the API gateway and keep Plugin APIs internal. It must not replace authorization inside each backend service. TLS, origin policy, trusted forwarding headers, rate limits and production ingress remain deployment decisions to implement and test.
+Future edge configuration may terminate TLS and forward browser requests to the
+Gateway. Select the proxy/provider through the deployment ADR process. Forwarded
+headers, origin policy, size/rate limits and private backend exposure need explicit
+configuration and tests. Arbitrary organization/user headers and private networking
+must not establish trust; each receiving API still authenticates and authorizes.
+No proxy may grant cross-tenant access or replace resource permission checks.
+
+There are no directory-specific environment variables, volumes, startup/shutdown
+commands or tests yet. The dependency stack is managed through
+[infrastructure](../README.md): `infra:config`/`infra:check` are static;
+`infra:up`/`infra:status`/`infra:logs`/`infra:down` are owner lifecycle commands.
+Compose provisions no edge service. Production routing/TLS and Gateway functionality
+remain separate future phases under ADR-0003/0029.

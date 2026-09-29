@@ -4,10 +4,22 @@ name: amani-ia
 services:
   postgres:
     image: pgvector/pgvector:0.8.6-pg17-bookworm
+    # Explicit manual restart: a failed first initialization must stay visible.
+    restart: "no"
+    networks: [dependencies, host_access]
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-amani}
       POSTGRES_USER: ${POSTGRES_USER:-amani}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the root .env}
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      # Authenticate TCP connections, including loopback; socket bootstrap stays local.
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+      CORE_PLATFORM_DB_PASSWORD: ${CORE_PLATFORM_DB_PASSWORD:?Set CORE_PLATFORM_DB_PASSWORD in the root .env}
+      KNOWLEDGE_DB_PASSWORD: ${KNOWLEDGE_DB_PASSWORD:?Set KNOWLEDGE_DB_PASSWORD in the root .env}
+      DATA_ANALYTICS_DB_PASSWORD: ${DATA_ANALYTICS_DB_PASSWORD:?Set DATA_ANALYTICS_DB_PASSWORD in the root .env}
+      CONVERSATIONS_DB_PASSWORD: ${CONVERSATIONS_DB_PASSWORD:?Set CONVERSATIONS_DB_PASSWORD in the root .env}
+      CONNECTORS_DB_PASSWORD: ${CONNECTORS_DB_PASSWORD:?Set CONNECTORS_DB_PASSWORD in the root .env}
+      EVALUATION_DB_PASSWORD: ${EVALUATION_DB_PASSWORD:?Set EVALUATION_DB_PASSWORD in the root .env}
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -22,10 +34,19 @@ services:
 
   redis:
     image: redis:7.4-alpine
+    restart: "no"
+    networks: [dependencies, host_access]
     command:
       - redis-server
       - --appendonly
       - "yes"
+      - --appendfsync
+      - everysec
+      # AOF is the sole persistence mechanism; future job keys must not be evicted.
+      - --save
+      - ""
+      - --maxmemory-policy
+      - noeviction
       - --requirepass
       - ${REDIS_PASSWORD:?Set REDIS_PASSWORD in the root .env}
     environment:
@@ -42,7 +63,13 @@ services:
       start_period: 10s
 
   minio:
-    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    # The upstream prebuilt image is unavailable; build official pinned sources.
+    image: amani-ia/minio:RELEASE.2025-10-15T17-29-55Z-local
+    build:
+      context: ./infrastructure/storage/minio
+    pull_policy: build
+    restart: "no"
+    networks: [dependencies, host_access]
     command: ["server", "/data", "--console-address", ":9001"]
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Set MINIO_ROOT_USER in the root .env}
@@ -63,3 +90,15 @@ volumes:
   postgres_data:
   redis_data:
   minio_data:
+
+networks:
+  dependencies:
+    driver: bridge
+    internal: true
+  # Docker does not publish ports for containers attached only to internal bridges.
+  # This bridge enables host access; explicit service bindings remain loopback-only.
+  host_access:
+    driver: bridge
+    internal: false
+    driver_opts:
+      com.docker.network.bridge.host_binding_ipv4: "127.0.0.1"

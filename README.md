@@ -113,22 +113,53 @@ validation after your installation.
 ## Local development
 
 Copy `.env.example` to `.env` if it does not already exist, then replace the local
-credential placeholders. The root environment file configures Compose only.
+credential placeholders. If `.env` exists, merge the six new service database password
+variables manually. The root environment file configures Compose only; applications
+must eventually receive only their own server-side credentials.
 
 ```bash
-cp -n .env.example .env
-# Edit .env and choose local credentials before starting services.
+if [ ! -f .env ]; then (umask 077; cp .env.example .env); fi
+# Edit .env: merge missing keys and choose distinct local passwords.
+chmod 600 .env
 npm run infra:config
+npm run infra:check
+npm run infra:check:local
+docker compose config --quiet
+# Owner-run only, after reviewing existing-volume handling:
 npm run infra:up
 npm run infra:status
+npm run infra:verify:postgres
+npm run infra:logs
 ```
 
 `infra:config` validates the example without needing local secrets. To validate your
 actual local values, run `docker compose config --quiet`. Infrastructure listens on
-loopback: PostgreSQL `5432`, Redis `6379`, MinIO API `9000`, MinIO console `9001`.
+loopback, with defaults PostgreSQL `5432`, Redis `6379`, MinIO API `9000`, MinIO
+console `9001`. The validated local setup uses PostgreSQL `15432` and Redis `16379`
+through `.env` overrides to avoid existing host listeners.
 Named volumes persist across `npm run infra:down`; that command does not erase data.
 See the component READMEs for credentials, health probes and pgvector verification.
-Containers have not been started during preparation.
+Startup is owner-run. Services share an internal dependency network and a separate
+bridge for publishing loopback host ports. The latter permits outbound traffic.
+Container restart is manual so initialization failures remain visible. `infra:up`
+checks the real `.env` first, including distinct PostgreSQL service/admin passwords.
+See the [infrastructure guide](infrastructure/README.md) for runtime validation status.
+
+MinIO is built automatically from pinned official sources by `infra:up`; its former
+prebuilt image is unavailable. The first build needs Internet access and can take
+several minutes. To build it separately, run `docker compose build minio`.
+Go and MinIO do not need to be installed on the host; see the
+[storage guide](infrastructure/storage/README.md).
+
+On a fresh PostgreSQL volume, bootstrap prepares six service-owned schemas/logins
+and an admin-owned pgvector namespace; it creates no business tables. Existing
+volumes are not migrated by a restart or a changed `.env`. In particular, the earlier
+`public.vector` setup needs a reviewed migration. See the
+[PostgreSQL instructions](infrastructure/postgres/README.md) before using an existing
+volume, and the [infrastructure guide](infrastructure/README.md) for exact Redis/MinIO
+checks and expected results. The owner validated initialization, schema privilege
+boundaries and service authentication on 2026-09-29; business/tenant authorization
+and persistence tests remain future work. Shared bootstrap/admin credentials are not for apps.
 
 Start the desired application in a separate terminal with a command from the
 workspace table. `npm run dev` starts only Gateway; it does not launch the whole
@@ -177,6 +208,8 @@ Static checks that do not require dependency installation:
 ```bash
 npm run check:structure
 npm run infra:config
+npm run infra:check
+npm run infra:test
 ```
 
 After the manual installation, validate the actual monorepo dependency resolution:
