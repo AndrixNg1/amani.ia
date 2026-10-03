@@ -32,4 +32,12 @@ export default tseslint.config(
       "prettier/prettier": ["error", { endOfLine: "auto" }],
     },
   },
+  {
+    // Plain Node scripts are linted without requiring a TypeScript project.
+    files: ['scripts/**/*.cjs'],
+    extends: [tseslint.configs.disableTypeChecked],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
 );

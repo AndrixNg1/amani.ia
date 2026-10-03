@@ -1,22 +1,21 @@
 import { NestFactory } from '@nestjs/core';
-import { existsSync } from 'node:fs';
 import { AppModule } from './app.module';
+import { coreConfig, loadLocalEnvironment } from './common/config';
+import { configureHttp } from './common/http';
 
 async function bootstrap() {
-  if (existsSync('.env')) {
-    process.loadEnvFile('.env');
-  }
-
-  const port = Number(process.env.PORT ?? 4001);
-  if (!Number.isInteger(port) || port < 1 || port > 65535) {
-    throw new Error('PORT must be an integer between 1 and 65535');
-  }
-
-  const app = await NestFactory.create(AppModule);
-  await app.listen(port, process.env.HOST ?? '127.0.0.1');
+  loadLocalEnvironment();
+  const config = coreConfig();
+  const app = await NestFactory.create(AppModule, {
+    logger: ['log', 'warn'],
+    abortOnError: false,
+  });
+  configureHttp(app);
+  app.enableShutdownHooks();
+  await app.listen(config.port, config.host);
 }
 
-bootstrap().catch((error: unknown) => {
-  console.error(error);
+bootstrap().catch(() => {
+  console.error('Core startup failed. Check environment and dependencies.');
   process.exitCode = 1;
 });
