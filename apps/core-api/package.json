@@ -1,7 +1,7 @@
 {
   "name": "@amani/core-api",
   "version": "0.0.1",
-  "description": "",
+  "description": "Core Platform: organizations, membership, policy and plugin governance",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
@@ -20,14 +20,29 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "dev": "npm run start:dev",
     "lint:check": "eslint \"{src,apps,libs,test}/**/*.ts\" --max-warnings=0",
-    "typecheck": "tsc --noEmit --incremental false"
+    "typecheck": "tsc --noEmit --incremental false",
+    "db:migrate": "ts-node src/database/cli.ts migrate",
+    "db:seed": "ts-node src/database/cli.ts seed",
+    "env:local": "node scripts/setup-local-env.cjs",
+    "test:integration": "jest --config test/jest-integration.json --runInBand",
+    "build:shared": "npm run build --workspace=@amani/types --workspace=@amani/contracts --workspace=@amani/config --workspace=@amani/shared",
+    "prebuild": "npm run build:shared",
+    "prestart:dev": "npm run build:shared"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "@amani/types": "0.1.0",
+    "@amani/contracts": "0.1.0",
+    "@amani/config": "0.1.0",
+    "@amani/shared": "0.1.0",
+    "drizzle-orm": "0.45.3",
+    "pg": "8.23.0",
+    "class-validator": "0.15.1",
+    "class-transformer": "0.5.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -52,7 +67,8 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.20.0"
+    "typescript-eslint": "^8.20.0",
+    "@types/pg": "8.23.1"
   },
   "jest": {
     "moduleFileExtensions": [
