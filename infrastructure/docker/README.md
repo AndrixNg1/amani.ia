@@ -64,7 +64,7 @@ npm run infra:verify:postgres
 npm run infra:down
 ```
 
-Startup is owner-only in this phase. `infra:down` removes containers/network while
+Startup is owner-run. `infra:down` removes containers/network while
 retaining named volumes. There is no reset, prune or volume-removal helper. Existing
 PostgreSQL volumes need reviewed migration rather than destructive reinitialization.
 Full `docker compose config` output can contain credentials; prefer `--quiet`.

@@ -1,6 +1,6 @@
 # Organization authorization requirements
 
-Status: Core organization policy is implemented. Gateway delegates permission checks and implements protected HTTP routes, with optional local-only user/service authentication. Production authentication and Plugin API resource guards remain open. See the [Gateway report](../../apps/gateway/PHASE-4-REPORT.md) and [Core report](../../apps/core-api/PHASE-3-REPORT.md) for validation.
+Status: Core organization policy is implemented. Gateway delegates permission checks and implements protected HTTP routes, with optional local-only user/service authentication. Production authentication and Plugin API resource guards remain open. See the [Gateway README](../../apps/gateway/README.md) and [Core README](../../apps/core-api/README.md) for validation commands.
 
 The following requirements apply to every business operation in every Plugin API. They also apply to background jobs and AI tool calls. A service account or an internal network location must not grant unrestricted access to user data.
 

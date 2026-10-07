@@ -1,4 +1,4 @@
-# API Gateway — Phase 4
+# API Gateway
 
 `@amani/gateway` is the NestJS 11 external API boundary. It authenticates callers,
 validates requests, builds context, asks Core for authorization and exposes explicit
@@ -9,8 +9,7 @@ entitlement logic or plugin resource ACLs. No Redis or PostgreSQL client is need
 provider is configured. Missing service authentication returns 503 before making a
 business call. Production IAM and service authentication remain unselected under
 proposed ADR-0011. The only enabled alternative is an explicitly configured **local
-development** adapter. This phase does not provide production login or production
-service credentials. See [the phase report](PHASE-4-REPORT.md) for executed validation.
+development** adapter. Production login and service credentials are not implemented.
 
 ## Structure and flow
 
@@ -177,7 +176,7 @@ and transport outcome. Unmatched routes use `UNMATCHED`, never the incoming URL.
 Bodies, tokens, cookies, query strings, raw exception text, backend URLs, user/tenant IDs
 and service proof headers are omitted. A correlation ID is caller-supplied tracing data:
 clients must not place secrets in it. No external log collector or retention policy is
-introduced by this phase.
+configured.
 
 ## Environment and local commands
 
@@ -293,9 +292,9 @@ ADR-0011 remains proposed; illustrative NextAuth diagrams do not select IAM. Pro
 user authentication, service credentials/delegation, TLS ingress, CORS deployment origins,
 proxy trust, global quotas, OpenAPI/versioning, credential rotation/revocation and safe
 initial identity/admin provisioning remain open. Drizzle is the existing Core implementation
-choice from phase 3, not a new shared ORM decision. Production readiness is not claimed.
+choice, not a shared ORM decision. Production readiness is not claimed.
 
 Knowledge resource ACLs, upload/retention design, authenticated plugin integration and
-negative cross-tenant resource tests belong to the next explicitly requested phase.
+negative cross-tenant resource tests belong to future Knowledge development.
 No Orchestrator, Plugin API, worker, frontend business feature or infrastructure redesign
 is included here.

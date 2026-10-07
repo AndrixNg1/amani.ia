@@ -1,6 +1,6 @@
 # @amani/contracts
 
-Status: shared transport types, with minimal Core/Gateway contracts added in phase 4. No runtime schemas, authentication,
+Shared transport types and Core/Gateway contracts. No runtime schemas, authentication,
 authorization engine, OpenAPI generation, SDK or network client is implemented.
 
 ## Responsibilities and boundaries
@@ -30,7 +30,7 @@ Its TypeScript shape or a successful JSON parse does not authenticate it. Future
 receivers must verify the calling service, delegation integrity, audience, expiry,
 current organization membership and operation/resource permissions. User/organization
 headers alone never establish trust. No runtime verification helper or production token format is supplied. The explicitly
-named `DevelopmentDelegation` describes only the local phase-4 integration protocol.
+named `DevelopmentDelegation` describes only the local development integration protocol.
 
 Organization identity appears once in `authorization.organizationId`, and user
 identity once in `authorization.delegatedUser.userId`. An absent `scope.resourceId`

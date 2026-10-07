@@ -5,12 +5,12 @@ The repository contains three NestJS platform services, five independent NestJS
 Plugin APIs and three Next.js frontends. Four shared packages, local infrastructure,
 Core Platform persistence/authorization and explicit Gateway routing are implemented.
 
-**Current status:** phases 1–4 foundations. Core owns tenant policy and platform data;
+**Current status:** Core owns tenant policy and platform data;
 Gateway applies HTTP controls and calls Core with bounded context. Both services deny
 business calls by default. Authentication adapters are local-development-only;
 production IAM and service authentication remain architecture decisions. Plugins,
-workers, Orchestrator and frontend business features remain future work. See the
-[Gateway report](apps/gateway/PHASE-4-REPORT.md) for checks and outstanding validation.
+workers, Orchestrator and frontend business features remain future work. Component
+READMEs describe configuration, commands and tests.
 
 ## Architecture
 
@@ -46,7 +46,7 @@ Compose provisions local dependencies only; no application containers are added.
 | `packages/` | `config`, `contracts`, `shared`, `types` implemented; `prompts`, `sdk`, `ui` reserved |
 | `workers/` | `data-engine`, `document-processing`; not initialized |
 | `infrastructure/` | Local PostgreSQL, Redis, storage configuration; Docker, gateway, observability documentation |
-| `docs/` | Architecture, diagrams, decision status, license decision and setup report |
+| `docs/` | Architecture, diagrams, decision status and license decision |
 | `scripts/` | Dependency-free structural inspection |
 | `tests/` | Planned integration, contract and cross-service end-to-end test directories |
 
@@ -149,8 +149,8 @@ volumes are not migrated by a restart or a changed `.env`. In particular, the ea
 [PostgreSQL instructions](infrastructure/postgres/README.md) before using an existing
 volume, and the [infrastructure guide](infrastructure/README.md) for exact Redis/MinIO
 checks and expected results. The owner validated initialization, schema privilege
-boundaries and service authentication on 2026-09-29; Core business/tenant authorization
-and persistence tests were added in phase 3; Gateway integration tests are in phase 4. Shared bootstrap/admin credentials are not for apps.
+boundaries and service authentication on 2026-09-29. Core and Gateway have dedicated
+authorization, persistence and integration tests. Shared bootstrap/admin credentials are not for apps.
 
 Start the desired application in a separate terminal with a command from the
 workspace table. `npm run dev` starts only Gateway; it does not launch the whole
@@ -234,9 +234,6 @@ for port in 4000 4001 4002 4101 4102 4103 4104 4105; do
 done
 ```
 
-[SETUP-REPORT.md](docs/SETUP-REPORT.md) records checks actually completed against
-existing local dependencies and checks still required after installation.
-
 ## Contribution and commit workflow
 
 Read the relevant component README and architecture decision status before editing.
@@ -245,8 +242,7 @@ boundaries, add real tests for behavior changes and document new variables or
 ports. New architectural decisions should be recorded as new ADRs without rewriting
 historical ones. Keep generated output and local configuration out of commits.
 
-The setup report records the initial repository preparation, including the backup
-of eight empty generated nested Git repositories. For current changes, inspect
+For current changes, inspect
 `git status --short` as well as `git diff`: untracked file contents do not appear
 in the diff until staged. Group related changes into scoped Conventional Commits.
 

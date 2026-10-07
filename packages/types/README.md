@@ -1,6 +1,6 @@
 # @amani/types
 
-Status: initialized in Phase 1. Framework-independent compile-time primitives;
+Framework-independent compile-time primitives;
 no runtime validation, database model or service integration.
 
 ## Responsibilities and boundaries
