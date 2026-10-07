@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { APP_GUARD } from '@nestjs/core';
 import { IdentityVerifier, TrustedIdentityGuard } from './common/context';
+import { identityVerifier } from './common/development-identity';
 import { DatabaseModule } from './database/database';
 import { AuthorizationModule } from './authorization/authorization.service';
 import { OrganizationsModule } from './organizations/organizations.service';
@@ -52,7 +53,7 @@ import { HealthController } from './health/health.controller';
   ],
   providers: [
     AppService,
-    IdentityVerifier,
+    { provide: IdentityVerifier, useFactory: () => identityVerifier() },
     { provide: APP_GUARD, useClass: TrustedIdentityGuard },
   ],
 })

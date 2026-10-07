@@ -36,8 +36,8 @@ export type CoreRequest = Request & {
 
 @Injectable()
 export class IdentityVerifier {
-  // Extension point for cryptographic service/delegation authentication in a later phase.
-  // No environment toggle, header, network location or bearer string enables access.
+  // Default closed. Production service/delegation authentication remains unselected.
+  // An explicitly configured development adapter is wired by AppModule only.
   verify(_request: Request): Promise<VerifiedIdentity | null> {
     void _request;
     return Promise.resolve(null);

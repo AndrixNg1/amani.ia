@@ -1,25 +1,35 @@
-# Core Platform API — Phase 3
+# Core Platform API
 
 Core persists platform identities, organizations, memberships, teams, tenant roles,
 permissions, the plugin registry, installations, plans, entitlements and audit records.
 It exposes policy decisions for future authenticated callers. Documents, datasets,
 conversations, connectors, evaluations and their resource ACLs belong to Plugin APIs.
 
-**Authentication is not implemented.** The default `IdentityVerifier` returns no
-identity, so every business HTTP endpoint returns **403**, including internal routes.
-Only `/`, `/health` and `/health/ready` are public. The domain services are usable by
-trusted server code; tests replace the verifier inside Nest's test container, never
-through an HTTP header or an environment bypass. Gateway is still outside this phase.
+**Production authentication is not implemented.** The default `IdentityVerifier` returns
+no identity, so business HTTP endpoints return **403**, including internal routes.
+Only `/`, `/health` and `/health/ready` are public. An explicit local-only
+service/delegation verifier supports Gateway integration; membership and policy checks
+remain in Core. It does not enable arbitrary identity headers or select production IAM.
 
-## Architecture audit and choice
+For local integration only, set `NODE_ENV=development`, `APP_ENV=development`,
+`CORE_SERVICE_AUTH_MODE=development` and a random 64-hex `DEVELOPMENT_SERVICE_SECRET`
+matching Gateway's separate service secret. Keep `HOST=127.0.0.1`. The factory rejects
+production/staging, absent explicit NODE_ENV, weak/invalid keys and external listeners.
+Default `CORE_SERVICE_AUTH_MODE=disabled` remains closed. Gateway's bearer token is
+never a Core credential. The main HTTP bootstrap captures raw JSON bytes so the verifier
+can bind signatures to the exact body, method, URL, scope, audience and tracing IDs.
+Delegations expire within 30 seconds and a bounded nonce cache rejects replay.
+See [Gateway's protocol and setup](../gateway/README.md) for the full development boundary.
 
-The audit covered all ADRs 0001–0030, architecture README/authorization documentation,
-the diagram catalog and diagrams 02, 04, 06, 07, 09, 15 and 16, the four shared packages,
-Core's starter, PostgreSQL ownership scripts, root configuration and workspace scripts.
-The existing Core had only its starter and liveness route; no ORM had been selected.
-Some architecture status sections predate phases 1–3. Diagram illustrations of
-NextAuth, marketplace packages, resource permissions in Core, or one role per user
-are not authoritative decisions; the ADRs and diagram catalog explicitly govern them.
+The Core-owned `test/gateway-fixture.ts` creates synthetic transactional fixtures and
+serves the real signed HTTP boundary for Gateway tests. It rolls back all data on exit.
+Domain tests use a separate test-container verifier override.
+
+## Architecture and database tooling
+
+Accepted ADRs and the diagram catalog govern service boundaries. Diagram illustrations
+of NextAuth, marketplace packages, resource permissions in Core, or one role per user
+are not authoritative decisions.
 
 **Selected: Drizzle ORM 0.45.3 with node-postgres 8.23.0.** Typed internal table models,
 parameterized queries and transactions fit the existing service-owned PostgreSQL
@@ -100,9 +110,8 @@ existing development role owns its own schema and can therefore alter its tables
 
 ## Configuration and local commands
 
-Execute from the repository root. Dependency installation is reserved to the owner;
-it was reported completed during this phase. Run it again only if manifests changed
-since that installation. Keep the root lockfile produced by npm; do not remove it.
+Execute from the repository root. The owner installs dependencies on initial setup
+and after manifest changes. Keep the root lockfile produced by npm; do not remove it.
 
 ```bash
 cd /home/andrix-ng/Bureau/amani.ia
@@ -147,8 +156,9 @@ npm run db:seed --workspace=@amani/core-api
 npm run dev:core
 ```
 
-If the local infrastructure images do not already exist, use the documented phase 2
-build/start procedure instead of `--no-build --pull never`.
+If the local infrastructure images do not already exist, use the
+[infrastructure build/start procedure](../../infrastructure/README.md) instead of
+`--no-build --pull never`.
 
 In another terminal:
 
@@ -333,17 +343,15 @@ work, because migration tests hold an advisory lock for the suite's duration.
 
 The HTTP suite separately proves that the real default verifier denies forged headers
 and that liveness survives a database outage. Unit tests cover configuration boundaries
-and valid/invalid lifecycle transitions. See `PHASE-3-REPORT.md` for the actually
-executed checks and remaining runtime work; a successful liveness request alone does
+and valid/invalid lifecycle transitions. A successful liveness request alone does
 not demonstrate authorization or persistence correctness.
 
-## Remaining before real Gateway traffic
+## Remaining before production Gateway traffic
 
-Implement and test cryptographic user/service identity verification, secure initial
-identity/admin provisioning, bounded delegation, and the matching Gateway client
-contract. Add OpenAPI/versioned transport documentation, authenticated end-to-end
-revocation tests, pagination, deployment packaging and production runtime grants.
-Keep resource ACLs in the future Plugin APIs. Ownership transfer, invitation acceptance,
-provisioning jobs, billing, quotas, resource data, RLS, telemetry backends and UI remain
-outside this phase. No Gateway, Orchestrator, Plugin API, worker or frontend business
-implementation was added.
+Select and implement production user/service authentication, credential rotation and
+revocation, secure initial identity/admin provisioning and production transport/TLS.
+Local bounded delegation and the Gateway client are implemented. OpenAPI/versioned
+transport documentation, pagination, deployment packaging and separate production
+runtime grants remain open. Keep resource ACLs in the future Plugin APIs. Ownership
+transfer, invitation acceptance, provisioning jobs, billing, resource data, RLS,
+telemetry backends and UI remain future work.

@@ -12,6 +12,72 @@ import type {
   UserId,
 } from '@amani/types';
 
+/** Established by an authentication provider, never by identity headers. */
+export interface AuthenticatedPrincipal {
+  readonly userId: UserId;
+  readonly authenticationMethod: string;
+  readonly issuedAt: IsoTimestamp;
+  readonly subject?: string;
+}
+
+/** Local integration protocol only; not a production authentication decision. */
+export interface DevelopmentDelegation {
+  readonly version: 1;
+  readonly requestId: RequestId;
+  readonly correlationId: CorrelationId;
+  readonly callingService: '@amani/gateway';
+  readonly audience: '@amani/core-api';
+  readonly userId: UserId;
+  readonly organizationId?: OrganizationId;
+  readonly scope: AuthorizationScope;
+  readonly issuedAt: number;
+  readonly expiresAt: number;
+  readonly nonce: string;
+  readonly method: 'GET' | 'POST';
+  readonly path: string;
+  readonly bodySha256: string;
+}
+
+/** Wire projections owned by Core; no ORM models or policy implementation. */
+export interface CoreAuthorizationDecision {
+  readonly allowed: boolean;
+  readonly organizationId: string;
+  readonly userId: string;
+  readonly permission: string;
+  readonly reason: 'ROLE_PERMISSION' | 'INACTIVE_CONTEXT' | 'MISSING_PERMISSION'
+    | 'PLUGIN_UNAVAILABLE' | 'WRONG_ORGANIZATION';
+}
+export interface CoreEffectivePermissions {
+  readonly organizationId: string;
+  readonly userId: string;
+  readonly permissions: readonly string[];
+}
+export interface CoreOrganization {
+  readonly id: string;
+  readonly name: string;
+  readonly slug: string;
+  readonly status: 'draft' | 'provisioning' | 'active' | 'failed' | 'suspended';
+  readonly createdAt: IsoTimestamp;
+  readonly updatedAt: IsoTimestamp;
+}
+export interface CoreUser {
+  readonly id: string;
+  readonly email: string;
+  readonly displayName: string;
+  readonly status: 'active' | 'suspended';
+  readonly createdAt: IsoTimestamp;
+  readonly updatedAt: IsoTimestamp;
+}
+export interface CoreMembership {
+  readonly id: string;
+  readonly organizationId: string;
+  readonly userId: string;
+  readonly status: 'active' | 'inactive';
+  readonly joinedAt: IsoTimestamp;
+  readonly createdAt: IsoTimestamp;
+  readonly updatedAt: IsoTimestamp;
+}
+
 /** Identity already verified by the future authentication boundary, never raw headers. */
 export interface DelegatedUserContext {
   readonly userId: UserId;

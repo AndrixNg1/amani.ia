@@ -1,12 +1,11 @@
 # Gateway infrastructure boundary
 
 Status: documentation only. No reverse proxy, ingress, TLS configuration, extra
-container, port, credential or runtime test is introduced in this phase.
+container, port, credential or runtime test is configured here.
 
 The NestJS API Gateway belongs to [apps/gateway](../../apps/gateway/README.md), whose
-starter development port is 4000. This directory is reserved for future edge
+development port is 4000. This directory is reserved for future edge
 infrastructure, never Gateway application modules, routing business logic or IAM.
-No application code was modified.
 
 Future edge configuration may terminate TLS and forward browser requests to the
 Gateway. Select the proxy/provider through the deployment ADR process. Forwarded
@@ -19,5 +18,5 @@ There are no directory-specific environment variables, volumes, startup/shutdown
 commands or tests yet. The dependency stack is managed through
 [infrastructure](../README.md): `infra:config`/`infra:check` are static;
 `infra:up`/`infra:status`/`infra:logs`/`infra:down` are owner lifecycle commands.
-Compose provisions no edge service. Production routing/TLS and Gateway functionality
-remain separate future phases under ADR-0003/0029.
+Compose provisions no edge service. Production routing/TLS remains separate from
+Gateway application functionality under ADR-0003/0029.

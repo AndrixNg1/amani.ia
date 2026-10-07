@@ -50,7 +50,8 @@ for (const group of ['apps', 'plugins', 'packages', 'workers', 'infrastructure']
         }
       } else {
         const env = readFileSync(join(path, '.env.example'), 'utf8');
-        assert.ok(env.split(/\r?\n/).includes(`PORT=${port}`), `Wrong PORT: ${pkg.name}`);
+        const portKey = entry.name === 'gateway' ? 'GATEWAY_PORT' : 'PORT';
+        assert.ok(env.split(/\r?\n/).includes(`${portKey}=${port}`), `Wrong ${portKey}: ${pkg.name}`);
         assert.ok(pkg.scripts?.['test:e2e'], `Missing HTTP tests: ${pkg.name}`);
       }
     }
