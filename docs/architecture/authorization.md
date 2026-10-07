@@ -1,6 +1,6 @@
 # Organization authorization requirements
 
-Status: required design constraints; no authentication, organization policy engine, service authentication, or resource authorization guards are implemented in the current scaffolds.
+Status: Core organization policy is implemented. Gateway delegates permission checks and implements protected HTTP routes, with optional local-only user/service authentication. Production authentication and Plugin API resource guards remain open. See the [Gateway report](../../apps/gateway/PHASE-4-REPORT.md) and [Core report](../../apps/core-api/PHASE-3-REPORT.md) for validation.
 
 The following requirements apply to every business operation in every Plugin API. They also apply to background jobs and AI tool calls. A service account or an internal network location must not grant unrestricted access to user data.
 
@@ -13,7 +13,7 @@ The following requirements apply to every business operation in every Plugin API
 5. Check the resource-level permission for every object being read, created, updated, or deleted. Scope every lookup, search, and mutation to the verified organization, including IDs supplied by the caller.
 6. Reject missing, invalid, expired, ambiguous, or unverifiable identity or authorization context. Do not fall back to a default tenant or administrative access when a dependency fails.
 
-The Core API is the intended authority for organization membership and permissions. Each Plugin API remains responsible for enforcing the resulting policy at its own boundary and resource access layer. Token format, policy APIs, caching/revocation rules, and exact roles remain implementation decisions; no role hierarchy or token protocol is established here.
+The Core API is the implemented authority for organization membership and permissions. Each Plugin API remains responsible for enforcing the resulting policy at its own boundary and resource access layer. Core policy APIs and tenant role rules are documented in its README. Gateway has no policy cache. Production token/delegation format and lifecycle remain decisions; the local development signing adapter does not select a production protocol.
 
 ## Backend-to-backend context
 
@@ -55,4 +55,4 @@ Audit events should identify the actor, service, organization, operation, and au
 
 Before any real tenant data is introduced, add negative tests for cross-organization resource IDs, forged tenant/user headers, authenticated non-members, revoked membership, insufficient resource permissions, direct Plugin API calls, missing service identity, scoped vector retrieval, cached results, and background jobs.
 
-The current starter unit and end-to-end tests are not evidence of these security properties. See the [repository test placeholders](../../tests/README.md).
+Core and Gateway suites cover their implemented boundaries; they do not establish security properties for the still-unimplemented Plugin APIs, retrieval or jobs. See the [repository test placeholders](../../tests/README.md).

@@ -1,22 +1,23 @@
 import { NestFactory } from '@nestjs/core';
-import { existsSync } from 'node:fs';
 import { AppModule } from './app.module';
+import { GATEWAY_CONFIG, loadLocalEnvironment } from './config/gateway.config';
+import type { GatewayConfig } from './config/gateway.config';
+import { configureHttp } from './common/http';
 
 async function bootstrap() {
-  if (existsSync('.env')) {
-    process.loadEnvFile('.env');
-  }
-
-  const port = Number(process.env.PORT ?? 4000);
-  if (!Number.isInteger(port) || port < 1 || port > 65535) {
-    throw new Error('PORT must be an integer between 1 and 65535');
-  }
-
-  const app = await NestFactory.create(AppModule);
-  await app.listen(port, process.env.HOST ?? '127.0.0.1');
+  loadLocalEnvironment();
+  const app = await NestFactory.create(AppModule, {
+    bodyParser: false,
+    logger: ['warn'],
+    abortOnError: false,
+  });
+  const config = app.get<GatewayConfig>(GATEWAY_CONFIG);
+  configureHttp(app);
+  app.enableShutdownHooks();
+  await app.listen(config.port, config.host);
 }
 
-bootstrap().catch((error: unknown) => {
-  console.error(error);
+bootstrap().catch(() => {
+  console.error('Gateway startup failed. Check environment and dependencies.');
   process.exitCode = 1;
 });
