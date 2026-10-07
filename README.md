@@ -2,26 +2,29 @@
 
 Amani IA is a multi-tenant, plugin-based AI SaaS organized as an npm monorepo.
 The repository contains three NestJS platform services, five independent NestJS
-Plugin APIs and three Next.js frontends. Shared packages, workers and several
-infrastructure components currently have reserved directories and documentation.
+Plugin APIs and three Next.js frontends. Four shared packages, local infrastructure,
+Core Platform persistence/authorization and explicit Gateway routing are implemented.
 
-**Current status:** application scaffolds and local development foundations.
-Business features, authentication, tenant enforcement, backend clients, persistence
-and AI retrieval are not implemented. Use synthetic data only at this stage.
-No ADRs existed at setup time; [decision status](docs/architecture/adr/README.md)
-records pending work without inventing a decision history.
+**Current status:** Core owns tenant policy and platform data;
+Gateway applies HTTP controls and calls Core with bounded context. Both services deny
+business calls by default. Authentication adapters are local-development-only;
+production IAM and service authentication remain architecture decisions. Plugins,
+workers, Orchestrator and frontend business features remain future work. Component
+READMEs describe configuration, commands and tests.
 
 ## Architecture
 
 The intended request flow is frontend → Gateway → Core API / AI Orchestrator /
 Plugin APIs. Plugins are independent backend services; the Orchestrator must obtain
 data through APIs that enforce the requesting user's organization membership and
-resource permissions. The current apps run independently; these calls are planned.
+resource permissions. Gateway → Core calls are implemented for controlled local development. Other
+backend integrations remain planned.
 
 ```mermaid
 flowchart LR
     UI[Website / Enterprise / Admin] -. planned .-> Gateway
-    Gateway -. planned .-> Core[Core API]
+    Gateway -->|local development authentication| Core[Core API]
+    Core -->|owned schema| PG
     Gateway -. planned .-> AI[AI Orchestrator]
     Gateway -. planned .-> Plugins[Five independent Plugin APIs]
     AI -. authorized requests only — planned .-> Plugins
@@ -40,10 +43,10 @@ Compose provisions local dependencies only; no application containers are added.
 | --- | --- |
 | `apps/` | Gateway, Core API, AI Orchestrator, Admin, Enterprise, Website; initialized |
 | `plugins/` | Knowledge, Data Analytics, Conversations, Connectors, Evaluation; initialized |
-| `packages/` | `config`, `contracts`, `prompts`, `sdk`, `shared`, `types`, `ui`; documentation only |
+| `packages/` | `config`, `contracts`, `shared`, `types` implemented; `prompts`, `sdk`, `ui` reserved |
 | `workers/` | `data-engine`, `document-processing`; not initialized |
 | `infrastructure/` | Local PostgreSQL, Redis, storage configuration; Docker, gateway, observability documentation |
-| `docs/` | Architecture, diagrams, decision status, license decision and setup report |
+| `docs/` | Architecture, diagrams, decision status and license decision |
 | `scripts/` | Dependency-free structural inspection |
 | `tests/` | Planned integration, contract and cross-service end-to-end test directories |
 
@@ -66,7 +69,7 @@ The root `package.json` is the workspace source of truth:
 ```
 
 Only directories with a `package.json` are npm packages. There are currently
-**11 initialized workspaces** and **no initialized shared packages**. New shared
+**15 initialized workspaces**, including **four shared packages**. New shared
 packages must use `@amani/<name>` and real check scripts. Workers are not npm
 workspaces until their runtime and initialization are decided. The obsolete
 `npm-workspace.yaml` has been removed. See the [npm workspace documentation](https://docs.npmjs.com/cli/v10/using-npm/workspaces/).
@@ -87,28 +90,16 @@ workspaces until their runtime and initialization are decided. The obsolete
 
 ## Installation — owner executes after review
 
-No installation, child lockfile removal or dependency removal has been performed
-as part of repository preparation. Review changes, then execute the following
-**exact commands, in this order, from the repository root**:
+Review manifest changes, then install from the repository root:
 
 ```bash
-# Supprimer les lockfiles des projets enfants
-find apps plugins -name package-lock.json -delete
-
-# Supprimer les dépendances locales
-find apps plugins -name node_modules -type d -prune -exec rm -rf {} +
-
-# Installer toutes les dépendances du monorepo
 npm install
 ```
 
-Your `npm install` generates the root `package-lock.json`; it has not been generated
-or edited manually. Review and commit that root lockfile. Existing child lockfiles
-are untouched and ignored pending your cleanup; package renaming intentionally
-leaves them stale until then. Run installation only at the root. After a root
-lockfile has been generated and reviewed, use `npm ci` for reproducible checkouts.
-Dependency ranges and versions were preserved; a fresh resolution still needs
-validation after your installation.
+The owner updates and reviews the root `package-lock.json`. Do not install separately
+inside workspaces or delete existing dependencies/lockfiles. After the root lockfile
+matches the manifests, use `npm ci` for reproducible checkouts. Gateway and Core build
+and development-start scripts build their shared package dependencies first.
 
 ## Local development
 
@@ -158,8 +149,8 @@ volumes are not migrated by a restart or a changed `.env`. In particular, the ea
 [PostgreSQL instructions](infrastructure/postgres/README.md) before using an existing
 volume, and the [infrastructure guide](infrastructure/README.md) for exact Redis/MinIO
 checks and expected results. The owner validated initialization, schema privilege
-boundaries and service authentication on 2026-09-29; business/tenant authorization
-and persistence tests remain future work. Shared bootstrap/admin credentials are not for apps.
+boundaries and service authentication on 2026-09-29. Core and Gateway have dedicated
+authorization, persistence and integration tests. Shared bootstrap/admin credentials are not for apps.
 
 Start the desired application in a separate terminal with a command from the
 workspace table. `npm run dev` starts only Gateway; it does not launch the whole
@@ -167,8 +158,7 @@ system. No dependency services are required for the scaffold health routes.
 
 Nest apps use their unique default port and `HOST=127.0.0.1`. To customize, copy that
 workspace's `.env.example` to `.env` and edit it. Nest bootstraps load this file from
-the workspace directory without overriding exported variables. Reserved downstream
-URLs are commented out because no service clients consume them yet. Do not copy
+the workspace directory without overriding exported variables. Gateway consumes `CORE_API_BASE_URL`; other downstream examples remain reserved. Do not copy
 root infrastructure credentials into browser variables.
 
 Next.js ports and loopback hosts are explicit in each workspace's `dev` and `start`
@@ -228,10 +218,11 @@ Root lint is non-mutating (`lint:check`); original per-backend `lint` scripts st
 apply fixes. Root lint/typecheck/build require scripts in every initialized
 workspace and never use `--if-present`. Type checks generate Next route types first
 and do not emit application builds. Backend unit and HTTP tests run across all
-eight Nest services; they do not cover real storage or service-to-service requests.
-**`npm test` intentionally fails while the three frontends have no test scripts.**
-Do not interpret passing backend tests as complete monorepo coverage or add empty
-success scripts to suppress this gap. Cross-service suites are also not implemented.
+eight Nest services. Gateway HTTP tests include a Core transport simulator; actual
+Core/PostgreSQL and Gateway → Core integration have separate opt-in suites documented
+in their workspace READMEs. **`npm test` intentionally fails while the three frontends
+and type-only packages have no `test` scripts.** Do not interpret passing backend tests
+as complete monorepo coverage or add empty success scripts to suppress this gap.
 
 Once dependencies and services are running, inspect Compose status and check the
 API liveness routes:
@@ -243,9 +234,6 @@ for port in 4000 4001 4002 4101 4102 4103 4104 4105; do
 done
 ```
 
-[SETUP-REPORT.md](docs/SETUP-REPORT.md) records checks actually completed against
-existing local dependencies and checks still required after installation.
-
 ## Contribution and commit workflow
 
 Read the relevant component README and architecture decision status before editing.
@@ -254,12 +242,9 @@ boundaries, add real tests for behavior changes and document new variables or
 ports. New architectural decisions should be recorded as new ADRs without rewriting
 historical ones. Keep generated output and local configuration out of commits.
 
-The root repository initially had no commits or remote. Eight empty generated
-nested Git repositories have been backed up outside the project so all source is
-part of this monorepo; the setup report records the reversible move. No staging,
-commit or push has been performed. Because files are initially untracked,
-`git diff` alone cannot display them; also inspect `git status --short` and file
-contents.
+For current changes, inspect
+`git status --short` as well as `git diff`: untracked file contents do not appear
+in the diff until staged. Group related changes into scoped Conventional Commits.
 
 After reviewing changes, completing manual installation and checking validation:
 
@@ -273,7 +258,7 @@ git diff --cached --check
 git diff --cached --stat
 git diff --cached
 # Confirm ignored local data is absent and the generated root lockfile is included.
-git commit -m "chore: prepare Amani IA monorepo foundations and documentation"
+git commit -m "type(scope): describe the change"
 ```
 
 ## License

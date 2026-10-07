@@ -1,7 +1,7 @@
 {
   "name": "@amani/gateway",
   "version": "0.0.1",
-  "description": "",
+  "description": "Secure external entry point and explicit Core Platform routing",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
@@ -20,14 +20,25 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "dev": "npm run start:dev",
     "lint:check": "eslint \"{src,apps,libs,test}/**/*.ts\" --max-warnings=0",
-    "typecheck": "tsc --noEmit --incremental false"
+    "typecheck": "tsc --noEmit --incremental false",
+    "build:shared": "npm run build --workspace=@amani/types --workspace=@amani/contracts --workspace=@amani/config --workspace=@amani/shared",
+    "prebuild": "npm run build:shared",
+    "prestart:dev": "npm run build:shared",
+    "test:integration": "jest --config test/jest-integration.json --runInBand"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "@amani/types": "0.1.0",
+    "@amani/contracts": "0.1.0",
+    "@amani/config": "0.1.0",
+    "@amani/shared": "0.1.0",
+    "class-validator": "0.15.1",
+    "class-transformer": "0.5.1",
+    "express": "5.2.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

@@ -1,6 +1,6 @@
 # @amani/config
 
-Status: Phase 1 server environment readers and runtime tests implemented.
+Server environment readers with runtime tests.
 No application configuration has been migrated.
 
 ## Purpose and boundaries

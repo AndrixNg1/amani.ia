@@ -1,7 +1,7 @@
 # @amani/shared
 
-Status: Phase 1 tracing ID helpers and tests implemented. No application consumes
-them yet. The package intentionally stays small.
+Tracing ID helpers and tests, used by Gateway and Core. The package intentionally
+stays small.
 
 ## Responsibilities and usage
 
@@ -58,14 +58,14 @@ before installation creates npm links. Tests build first, exercise emitted code,
 check hostile/oversized IDs, propagation, UUID generation and CommonJS/ESM exports.
 Compiler fixtures verify narrowing and request/correlation ID distinctions.
 
-The boundary suite inspects all four Phase 1 manifests and source imports, rejects
+The boundary suite inspects all four shared-package manifests and source imports, rejects
 undeclared/cross-service dependencies, checks graph cycles and keeps SDK/prompts/UI
 uninitialized. These are static development checks, not service security tests.
 
 ## Future integration
 
-Gateway, APIs, plugins and future Node workers may adopt these helpers explicitly
-in later phases. No framework integration is included now.
+Gateway and Core use these helpers. Other APIs, plugins and Node workers may adopt
+them as needed; framework integration stays inside the consuming service.
 See [package setup](../README.md),
 [ADR-0005](../../docs/architecture/adr/0005-backend-sync-communication.md) and
 [ADR-0028](../../docs/architecture/adr/0028-observability-resilience-secrets.md).

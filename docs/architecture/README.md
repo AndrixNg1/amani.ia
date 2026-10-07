@@ -4,7 +4,7 @@ Amani IA is organized as a multi-tenant, plugin-based AI SaaS. This document sep
 
 ## Current repository
 
-Eleven projects have a `package.json` and application source: three Next.js frontends and eight NestJS backends. They are npm workspaces under `apps/*` and `plugins/*`. The `packages/*` workspace pattern reserves space for shared packages; its existing directories have no package manifests and are not initialized workspaces.
+Eleven projects have a `package.json` and application source: three Next.js frontends and eight NestJS backends. They are npm workspaces under `apps/*` and `plugins/*`. Four additional shared workspaces (`types`, `contracts`, `config`, `shared`) are initialized under `packages/*`, giving 15 npm workspaces.
 
 | Project | Package | Technology | Development port | Intended responsibility |
 | --- | --- | --- | --- | --- |
@@ -20,21 +20,21 @@ Eleven projects have a `package.json` and application source: three Next.js fron
 | Connectors | `@amani/connectors` | NestJS / TypeScript | 4104 | External source connections |
 | Evaluation | `@amani/evaluation` | NestJS / TypeScript | 4105 | AI evaluation workflows |
 
-Backend `GET /health` endpoints provide minimal process liveness. They do not verify database connectivity, dependent services, authentication, readiness for customer traffic, or tenant isolation. The generated starter routes remain scaffolding.
+Backend `GET /health` endpoints provide minimal process liveness. They do not verify database connectivity, dependent services, authentication, readiness for customer traffic, or tenant isolation. Core also has `/health/ready` for its database; Gateway `/ready` checks configured auth providers and Core readiness. Other backends remain scaffolds.
 
 ## Intended backend communication
 
-The browser-facing gateway is the intended entry point for application requests. It will route to the Core API and AI Orchestrator. Plugin APIs are independent backend services; the orchestrator will call them through authenticated backend-to-backend requests. Each Plugin API must independently enforce organization and resource permissions, even if an upstream service already authorized the request.
+The browser-facing gateway is the intended entry point for application requests. It routes explicitly to Core; AI Orchestrator routing remains planned. Plugin APIs are independent backend services; the orchestrator will call them through authenticated backend-to-backend requests. Each Plugin API must independently enforce organization and resource permissions, even if an upstream service already authorized the request.
 
-Service URL environment examples describe intended destinations. They do not implement forwarding, HTTP clients, service authentication, retries, or policy checks. A successful health response does not demonstrate that two services communicate.
+Gateway has explicit `/api/platform/...` routes, one bounded native-fetch Core client, authentication/service-authentication ports, Core permission checks and HTTP protections. Default identity verification denies access; optional cryptographic adapters are restricted to explicit local development. Other service integrations remain planned. A liveness response alone does not establish connectivity or authorization.
 
-The Core API is the intended authority for organization membership and permission information. The mechanism for distributing or checking that policy remains to be implemented. A user's identity and their membership of a selected organization are separate checks. An arbitrary tenant header is never sufficient proof of either.
+The Core API implements organization membership, RBAC, plan/installation checks and internal policy HTTP endpoints. Gateway asks Core for explicit permission and Core reauthorizes business operations. A user's identity and their membership of a selected organization are separate checks. An arbitrary tenant header is never sufficient proof of either.
 
 The AI Orchestrator must retrieve only resources the requesting user is authorized to access in the verified organization. It must never load all tenant data and rely on an LLM prompt to filter the result. See the [authorization requirements](authorization.md) for the required trust boundaries.
 
 ## Shared packages and workers
 
-[Shared packages](../../packages/README.md) reserve boundaries for contracts, types, configuration, prompts, UI, SDK, and shared utilities. They contain no executable implementation or dependencies yet.
+[Shared packages](../../packages/README.md) implement transport types, identifiers, environment parsing and safe tracing helpers. Gateway and Core consume them. Prompts, UI and SDK remain reserved. No shared ORM or authorization engine exists.
 
 [Workers](../../workers/README.md) reserve data-engine and document-processing responsibilities. Neither worker has an application, package manifest, queue integration, or runtime selected. They are outside the current root workspace patterns.
 
@@ -42,7 +42,7 @@ The AI Orchestrator must retrieve only resources the requesting user is authoriz
 
 The local Compose foundation defines PostgreSQL with pgvector on port 5432, Redis on port 6379, and MinIO on ports 9000 (API) and 9001 (console). See [infrastructure](../../infrastructure/README.md) for configuration and startup checks.
 
-These containers support future relational/vector storage, queues/cache, and object storage. Application clients, schema migrations, tenant-aware storage policies, queue consumers, and storage access authorization are not implemented. Container health checks establish container availability only.
+These containers support future relational/vector storage, queues/cache, and object storage. Core uses Drizzle/node-postgres with versioned migrations in its owned `core_platform` schema. Plugin storage policies, queue consumers and object-storage authorization remain unimplemented. Gateway has no database. Container health checks establish container availability only.
 
 ## Implementation status
 
@@ -51,13 +51,15 @@ These containers support future relational/vector storage, queues/cache, and obj
 | Eleven application and Plugin API scaffolds | Present |
 | Workspace configuration, development ports, environment examples | Foundational configuration |
 | Backend process liveness endpoints | Minimal `GET /health` |
-| PostgreSQL/pgvector, Redis, and MinIO | Local Compose configuration; app integration pending |
-| Gateway routing and backend clients | Not implemented |
-| Identity verification, service authentication, organization authorization | Not implemented |
+| PostgreSQL/pgvector, Redis, and MinIO | Validated local infrastructure; Core uses PostgreSQL, Gateway needs no Redis/MinIO |
+| Gateway routing and backend clients | Explicit Core routes, bounded fetch, validation, errors, CORS, limits and safe logs |
+| Identity verification, service authentication, organization authorization | Core tenant policy implemented; local-only identity/service adapters; production IAM/service mechanism pending |
 | Plugin resource access guards and tenant isolation | Required; not implemented |
 | AI retrieval and model integration | Not implemented |
-| Shared packages, workers, repository-wide integration tests | Placeholder directories |
+| Shared packages | Four implemented packages |
+| Core/Gateway integration tests | Dedicated HTTP and PostgreSQL suites; commands in component READMEs |
+| Workers and repository-wide integration tests | Reserved |
 
-These scaffolds are not ready to process real customer or organization data. Tenant guards and permissions must be implemented and tested before business endpoints or data processing are enabled.
+Production authentication, deployment and plugin resource controls remain open. See [Gateway](../../apps/gateway/README.md) and [Core](../../apps/core-api/README.md) for implemented behavior and validation commands.
 
-[Diagrams](diagrams/README.md) show both the current repository and intended communication. [ADR guidance](adr/README.md) records that no pre-existing ADRs were present; this documentation does not manufacture an accepted decision history.
+[Diagrams](diagrams/README.md) show both the current repository and intended communication. [The ADR index](adr/README.md) lists the 30 decisions and their accepted/proposed status.

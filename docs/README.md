@@ -1,6 +1,6 @@
 # Documentation
 
-Amani IA currently contains eleven initialized application and Plugin API scaffolds. Shared packages, workers, and repository-wide test directories are documentation placeholders.
+Amani IA contains eleven application and Plugin API workspaces and four shared packages. Core Platform and Gateway are implemented; other application business features and workers remain planned.
 
 - [Architecture and implementation status](architecture/README.md)
 - [Organization authorization requirements](architecture/authorization.md)
@@ -10,4 +10,4 @@ Amani IA currently contains eleven initialized application and Plugin API scaffo
 - [Worker responsibilities](../workers/README.md)
 - [Testing scope and gaps](../tests/README.md)
 
-Start with the [root README](../README.md) for installation, ports, manual cleanup commands, and validation. Component READMEs describe their own configuration and commands. Documentation of a planned capability does not mean the capability has been implemented.
+Start with the [root README](../README.md) for installation, ports and validation. Component READMEs describe their own configuration and commands. Documentation of a planned capability does not mean the capability has been implemented.

@@ -1,8 +1,8 @@
-# Infrastructure — Phase 2
+# Infrastructure
 
-Status: Phase 2 local foundation validated on 2026-09-29. The owner built MinIO,
+Local foundation validated on 2026-09-29. The owner built MinIO,
 started all three dependencies, completed PostgreSQL recovery and passed the
-service-role verification. No application, plugin or worker was implemented.
+service-role verification.
 
 ## Recorded local validation
 
@@ -162,9 +162,8 @@ to an accepted implementation.
 - Diagram **18** illustrates Kubernetes, Vercel, cloud providers, Pinecone and monitoring.
   ADR-0008/0028/0029 retain pgvector and leave production vendors/tools open. These
   illustrations do not justify provisioning them now.
-- Historical architecture tables still describe packages as placeholders. Phase 1
-  implemented four packages; see [packages](../packages/README.md). Historical ADRs
-  and diagrams are not rewritten as part of this infrastructure task.
+- Four shared packages are implemented; see [packages](../packages/README.md).
+  Historical ADRs and diagrams retain their original decision context.
 
 See [PostgreSQL](postgres/README.md), [Redis](redis/README.md),
 [storage](storage/README.md), [Docker](docker/README.md),
