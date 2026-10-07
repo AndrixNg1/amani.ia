@@ -1,6 +1,6 @@
 # @amani/contracts
 
-Status: Phase 1 transport types implemented. No runtime schemas, authentication,
+Status: shared transport types, with minimal Core/Gateway contracts added in phase 4. No runtime schemas, authentication,
 authorization engine, OpenAPI generation, SDK or network client is implemented.
 
 ## Responsibilities and boundaries
@@ -10,6 +10,12 @@ authorization engine, OpenAPI generation, SDK or network client is implemented.
 - `AuthorizationContext`: organization, delegated user, audience, operation/resource
   scope, verification time and expiration time.
 - `DelegatedUserContext`, `AuthorizationScope`: descriptive identity/scope metadata.
+- `AuthenticatedPrincipal`: identity established by an authentication provider.
+- `CoreAuthorizationDecision`, `CoreEffectivePermissions`, `CoreOrganization`,
+  `CoreUser`, `CoreMembership`: Core-owned HTTP projections, without ORM types.
+- `DevelopmentDelegation`: local-only signed-request payload agreed by Core and
+  Gateway, not a production authentication protocol. Its validators/signers stay
+  inside the services; the package contains no credentials or cryptographic code.
 - `ApiMetadata`, `ApiError`, `ErrorEnvelope`: common API/error shape.
 - `HealthResponse`: `{ status: 'ok', service }`, process liveness only.
 - `EventEnvelope<Payload>`, `JobMetadata`: tenant-scoped, versioned async provenance.
@@ -23,7 +29,8 @@ The request context describes **already verified context** inside a service.
 Its TypeScript shape or a successful JSON parse does not authenticate it. Future
 receivers must verify the calling service, delegation integrity, audience, expiry,
 current organization membership and operation/resource permissions. User/organization
-headers alone never establish trust. No verification helper or token format is supplied.
+headers alone never establish trust. No runtime verification helper or production token format is supplied. The explicitly
+named `DevelopmentDelegation` describes only the local phase-4 integration protocol.
 
 Organization identity appears once in `authorization.organizationId`, and user
 identity once in `authorization.delegatedUser.userId`. An absent `scope.resourceId`
@@ -76,8 +83,8 @@ job actors, errors and liveness. No fake runtime `test` script is supplied.
 
 ## Future integration and ADR status
 
-Gateway, Core, Orchestrator and plugins will adopt contracts later; none consumes
-them now. Runtime schemas, compatibility checks, OpenAPI and SDK generation remain
+Gateway and Core consume these contracts. Orchestrator and plugin adoption remains
+future work. Runtime schemas, compatibility checks, OpenAPI and SDK generation remain
 open under proposed ADR-0005/0006/0007/0011. The requested `eventId` is used instead
 of ADR-0007's proposed `messageId`, without a second duplicate ID.
 
