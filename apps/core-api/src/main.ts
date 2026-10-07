@@ -9,6 +9,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['log', 'warn'],
     abortOnError: false,
+    rawBody: true,
   });
   configureHttp(app);
   app.enableShutdownHooks();

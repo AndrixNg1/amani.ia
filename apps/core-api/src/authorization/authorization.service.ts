@@ -3,25 +3,15 @@ import { sql } from 'drizzle-orm';
 import { DatabaseModule, DatabaseService } from '../database/database';
 import type { Session } from '../database/database';
 import type { Actor } from '../common/context';
+import type { CoreAuthorizationDecision } from '@amani/contracts';
 
 type Grant = {
   key: string | null;
   plugin_key: string | null;
   plugin_allowed: boolean;
 };
-export type DecisionReason =
-  | 'ROLE_PERMISSION'
-  | 'INACTIVE_CONTEXT'
-  | 'MISSING_PERMISSION'
-  | 'PLUGIN_UNAVAILABLE'
-  | 'WRONG_ORGANIZATION';
-export interface Decision {
-  allowed: boolean;
-  organizationId: string;
-  userId: string;
-  permission: string;
-  reason: DecisionReason;
-}
+export type DecisionReason = CoreAuthorizationDecision['reason'];
+export type Decision = CoreAuthorizationDecision;
 
 @Injectable()
 export class AuthorizationService {

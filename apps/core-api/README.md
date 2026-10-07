@@ -5,11 +5,25 @@ permissions, the plugin registry, installations, plans, entitlements and audit r
 It exposes policy decisions for future authenticated callers. Documents, datasets,
 conversations, connectors, evaluations and their resource ACLs belong to Plugin APIs.
 
-**Authentication is not implemented.** The default `IdentityVerifier` returns no
-identity, so every business HTTP endpoint returns **403**, including internal routes.
-Only `/`, `/health` and `/health/ready` are public. The domain services are usable by
-trusted server code; tests replace the verifier inside Nest's test container, never
-through an HTTP header or an environment bypass. Gateway is still outside this phase.
+**Production authentication is not implemented.** The default `IdentityVerifier` returns
+no identity, so business HTTP endpoints return **403**, including internal routes.
+Only `/`, `/health` and `/health/ready` are public. Phase 4 adds an explicit local-only
+service/delegation verifier for Gateway integration; membership and policy checks
+remain in Core. It does not enable arbitrary identity headers or select production IAM.
+
+For local integration only, set `NODE_ENV=development`, `APP_ENV=development`,
+`CORE_SERVICE_AUTH_MODE=development` and a random 64-hex `DEVELOPMENT_SERVICE_SECRET`
+matching Gateway's separate service secret. Keep `HOST=127.0.0.1`. The factory rejects
+production/staging, absent explicit NODE_ENV, weak/invalid keys and external listeners.
+Default `CORE_SERVICE_AUTH_MODE=disabled` remains closed. Gateway's bearer token is
+never a Core credential. The main HTTP bootstrap captures raw JSON bytes so the verifier
+can bind signatures to the exact body, method, URL, scope, audience and tracing IDs.
+Delegations expire within 30 seconds and a bounded nonce cache rejects replay.
+See [Gateway's protocol and setup](../gateway/README.md) for the full development boundary.
+
+The Core-owned `test/gateway-fixture.ts` creates synthetic transactional fixtures and
+serves the real signed HTTP boundary for Gateway tests. It rolls back all data on exit.
+Existing phase-3 domain tests retain their separate test-container verifier override.
 
 ## Architecture audit and choice
 
@@ -337,13 +351,15 @@ and valid/invalid lifecycle transitions. See `PHASE-3-REPORT.md` for the actuall
 executed checks and remaining runtime work; a successful liveness request alone does
 not demonstrate authorization or persistence correctness.
 
-## Remaining before real Gateway traffic
+## Remaining before production Gateway traffic
 
-Implement and test cryptographic user/service identity verification, secure initial
-identity/admin provisioning, bounded delegation, and the matching Gateway client
-contract. Add OpenAPI/versioned transport documentation, authenticated end-to-end
-revocation tests, pagination, deployment packaging and production runtime grants.
-Keep resource ACLs in the future Plugin APIs. Ownership transfer, invitation acceptance,
-provisioning jobs, billing, quotas, resource data, RLS, telemetry backends and UI remain
-outside this phase. No Gateway, Orchestrator, Plugin API, worker or frontend business
-implementation was added.
+Select and implement production user/service authentication, credential rotation and
+revocation, secure initial identity/admin provisioning and production transport/TLS.
+Local bounded delegation and the Gateway client now exist in phase 4. OpenAPI/versioned
+transport documentation, pagination, deployment packaging and separate production
+runtime grants remain open. Keep resource ACLs in the future Plugin APIs. Ownership
+transfer, invitation acceptance, provisioning jobs, billing, resource data, RLS,
+telemetry backends and UI remain outside these phases.
+
+The historical phase-3 report describes its original validation. Current phase-4
+changes and executed checks are recorded in [the Gateway report](../gateway/PHASE-4-REPORT.md).
