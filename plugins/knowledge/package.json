@@ -20,12 +20,24 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "dev": "npm run start:dev",
     "lint:check": "eslint \"{src,apps,libs,test}/**/*.ts\" --max-warnings=0",
-    "typecheck": "tsc --noEmit --incremental false"
+    "typecheck": "tsc --noEmit --incremental false",
+    "db:migrate": "ts-node src/database/cli.ts migrate",
+    "env:local": "node scripts/setup-local-env.cjs"
   },
   "dependencies": {
+    "@amani/config": "0.1.0",
+    "@amani/contracts": "0.1.0",
+    "@amani/shared": "0.1.0",
+    "@amani/types": "0.1.0",
+    "@aws-sdk/client-s3": "^3.800.0",
+    "@aws-sdk/s3-presigned-post": "^3.800.0",
+    "class-transformer": "0.5.1",
+    "class-validator": "0.15.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "drizzle-orm": "0.45.3",
+    "pg": "8.23.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
@@ -38,6 +50,7 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.0",
+    "@types/pg": "8.23.1",
     "@types/supertest": "^7.0.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
