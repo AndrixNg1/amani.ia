@@ -62,3 +62,10 @@ C'est une décision transversale et obligatoire. Inclure dans le modèle de mena
 
 - ADR liés : ADR-0005, ADR-0008, ADR-0010, ADR-0011, ADR-0012, ADR-0018, ADR-0019, ADR-0020, ADR-0021.
 - Les diagrammes correspondants seront créés après validation des ADR. Un schéma cible ne constitue pas une preuve d'implémentation.
+
+## Complément du 15 octobre 2026
+
+Voir [ADR-0031 — Sources d’entreprise](0031-enterprise-sources.md) et
+[ADR-0032 — ACL et uploads Knowledge](0032-knowledge-access-uploads.md).
+Ces décisions complètent la frontière documentaire/structurée et précisent le socle
+Knowledge sans modifier les conclusions historiques ci-dessus.

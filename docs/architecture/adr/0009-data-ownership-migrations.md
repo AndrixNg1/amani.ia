@@ -57,3 +57,10 @@ Aucun plugin n'obtient un compte superutilisateur commun ou les credentials du C
 
 - ADR liés : ADR-0002, ADR-0004, ADR-0006, ADR-0008, ADR-0010, ADR-0014.
 - Les diagrammes correspondants seront créés après validation des ADR. Un schéma cible ne constitue pas une preuve d'implémentation.
+
+## Complément du 15 octobre 2026
+
+Voir [ADR-0031 — Sources d’entreprise](0031-enterprise-sources.md) et
+[ADR-0032 — ACL et uploads Knowledge](0032-knowledge-access-uploads.md).
+Ces décisions complètent la frontière documentaire/structurée et précisent le socle
+Knowledge sans modifier les conclusions historiques ci-dessus.
