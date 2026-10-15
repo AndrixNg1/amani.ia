@@ -22,7 +22,11 @@
     "lint:check": "eslint \"{src,apps,libs,test}/**/*.ts\" --max-warnings=0",
     "typecheck": "tsc --noEmit --incremental false",
     "db:migrate": "ts-node src/database/cli.ts migrate",
-    "env:local": "node scripts/setup-local-env.cjs"
+    "env:local": "node scripts/setup-local-env.cjs",
+    "build:shared": "npm run build --workspace=@amani/types --workspace=@amani/contracts --workspace=@amani/config --workspace=@amani/shared",
+    "prebuild": "npm run build:shared",
+    "prestart:dev": "npm run build:shared",
+    "predb:migrate": "npm run build:shared"
   },
   "dependencies": {
     "@amani/config": "0.1.0",
