@@ -33,7 +33,7 @@ export class SourcesService {
       }>(
         sql`INSERT INTO knowledge.knowledge_sources(organization_id,knowledge_base_id,source_kind,display_name,created_by_membership_id) VALUES (${org},${baseId},'manual_upload',${dto.displayName.trim()},${member}) RETURNING id,knowledge_base_id AS "knowledgeBaseId",source_kind AS "sourceKind",display_name AS "displayName",status`,
       );
-      const value = source.rows[0]!;
+      const value = source.rows[0];
       await tx.execute(
         sql`INSERT INTO knowledge.audit_events(organization_id,actor_membership_id,action,resource_type,resource_id,request_id,correlation_id) VALUES(${org},${member},'knowledge_source.created','knowledge_source',${value.id},${actor.requestId},${actor.correlationId})`,
       );

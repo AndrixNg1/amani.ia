@@ -37,7 +37,8 @@ export type KnowledgeRequest = Request & {
 };
 @Injectable()
 export class IdentityVerifier {
-  verify(_request: Request): Promise<VerifiedIdentity | null> {
+  verify(request: Request): Promise<VerifiedIdentity | null> {
+    void request;
     return Promise.resolve(null);
   }
 }

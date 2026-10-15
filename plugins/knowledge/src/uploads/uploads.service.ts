@@ -30,11 +30,12 @@ export class UploadsService {
     private readonly storage: ObjectStorage,
   ) {}
   private filename(name: string) {
-    return name
-      .replace(/[\u0000-\u001f\\/]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .slice(0, 255);
+    const sanitized = Array.from(name, (character) =>
+      character.charCodeAt(0) < 0x20 || character === '\\' || character === '/'
+        ? ' '
+        : character,
+    ).join('');
+    return sanitized.replace(/\s+/g, ' ').trim().slice(0, 255);
   }
   async initiate(
     actor: Actor,
@@ -89,7 +90,7 @@ export class UploadsService {
       const document = await tx.execute<{ id: string }>(
         sql`INSERT INTO knowledge.documents(organization_id,knowledge_base_id,source_id,title,access_mode,created_by_membership_id) VALUES (${org},${baseId},${dto.sourceId},${dto.title.trim()},${dto.accessMode ?? 'inherit'},${member}) RETURNING id`,
       );
-      const documentId = document.rows[0]!.id;
+      const documentId = document.rows[0].id;
       const versionId = randomUUID();
       const key = `knowledge/${org}/${documentId}/${versionId}/original`;
       await tx.execute(

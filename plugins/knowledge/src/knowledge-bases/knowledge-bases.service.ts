@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import type { Actor } from '../common/context';
+import type { Session } from '../database/database';
 import { DatabaseService } from '../database/database';
 import { ResourcePolicy } from '../authorization/resource-policy';
 import type {
@@ -29,7 +30,7 @@ export class KnowledgeBasesService {
         }>(
           sql`INSERT INTO knowledge.knowledge_bases(organization_id,name,description,created_by_membership_id) VALUES (${org},${dto.name.trim()},${dto.description?.trim() ?? ''},${membership.membershipId}) RETURNING id,name,description,status`,
         );
-        const base = row.rows[0]!;
+        const base = row.rows[0];
         for (const action of ['read', 'ingest', 'manage'])
           await tx.execute(
             sql`INSERT INTO knowledge.resource_grants(organization_id,resource_type,resource_id,membership_id,action,created_by_membership_id) VALUES (${org},'knowledge_base',${base.id},${membership.membershipId},${action},${membership.membershipId})`,
@@ -116,7 +117,7 @@ export class KnowledgeBasesService {
     return result.rows[0];
   }
   private async audit(
-    db: any,
+    db: Session,
     org: string,
     membership: string,
     action: string,
