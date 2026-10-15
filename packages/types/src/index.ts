@@ -58,3 +58,7 @@ export interface Paginated<T> {
   readonly items: readonly T[];
   readonly pagination: PaginationMetadata;
 }
+
+/** Neutral provenance vocabulary; not persistence or credentials. */
+export type SourceFamily = 'documentary' | 'structured';
+export type SourceKind = 'manual_upload' | 'connector';
