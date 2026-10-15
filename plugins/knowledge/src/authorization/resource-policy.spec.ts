@@ -30,12 +30,14 @@ const authorization: KnowledgeAuthorizationResponse = {
   },
 };
 function policyWith(rows: readonly unknown[][]) {
-  const execute = jest.fn(async (): Promise<QueryResult> => ({ rows: [] }));
+  const execute = jest.fn((): Promise<QueryResult> =>
+    Promise.resolve({ rows: [] }),
+  );
   for (const value of rows) execute.mockResolvedValueOnce({ rows: value });
   const database = { db: { execute } } as unknown as DatabaseService;
   const core = {
-    authorize: jest.fn(
-      async (): Promise<KnowledgeAuthorizationResponse> => authorization,
+    authorize: jest.fn((): Promise<KnowledgeAuthorizationResponse> =>
+      Promise.resolve(authorization),
     ),
   } as unknown as CorePolicyClient;
   return { policy: new ResourcePolicy(database, core), execute };
