@@ -82,20 +82,20 @@ PostgreSQL `gen_random_uuid()`; Core does not use pgvector or install extensions
 
 The initial migration creates 18 business tables plus its migration ledger:
 
-| Tables | Relationship and purpose |
-| --- | --- |
-| `users`, `organizations` | Global identity; organization is tenant boundary |
-| `memberships` | User belongs to multiple organizations; unique organization/user |
-| `teams`, `team_memberships` | Team membership within the same organization |
-| `roles`, `permissions` | Tenant roles; canonical, extensible permission definitions |
-| `role_permissions`, `membership_roles` | Multiple roles per membership; multiple permissions per role |
-| `platform_roles`, `user_platform_roles` | Separate platform admin/moderator assignments |
-| `plugins`, `plugin_versions` | Platform catalog and API compatibility version |
-| `organization_plugin_installations` | One installation per organization/plugin; version belongs to plugin |
-| `plans`, `plan_entitlements` | Capabilities such as `plugin:knowledge`; no prices or payment |
-| `organization_subscriptions` | One current subscription per organization; optional validity period |
-| `audit_events` | Actor, tenant, action, target, correlation, outcome, allowlisted metadata |
-| `schema_migrations` | Applied filename, SHA-256 checksum and timestamp |
+| Tables                                  | Relationship and purpose                                                  |
+| --------------------------------------- | ------------------------------------------------------------------------- |
+| `users`, `organizations`                | Global identity; organization is tenant boundary                          |
+| `memberships`                           | User belongs to multiple organizations; unique organization/user          |
+| `teams`, `team_memberships`             | Team membership within the same organization                              |
+| `roles`, `permissions`                  | Tenant roles; canonical, extensible permission definitions                |
+| `role_permissions`, `membership_roles`  | Multiple roles per membership; multiple permissions per role              |
+| `platform_roles`, `user_platform_roles` | Separate platform admin/moderator assignments                             |
+| `plugins`, `plugin_versions`            | Platform catalog and API compatibility version                            |
+| `organization_plugin_installations`     | One installation per organization/plugin; version belongs to plugin       |
+| `plans`, `plan_entitlements`            | Capabilities such as `plugin:knowledge`; no prices or payment             |
+| `organization_subscriptions`            | One current subscription per organization; optional validity period       |
+| `audit_events`                          | Actor, tenant, action, target, correlation, outcome, allowlisted metadata |
+| `schema_migrations`                     | Applied filename, SHA-256 checksum and timestamp                          |
 
 Composite foreign keys bind role, membership and team references to the same
 organization even for direct SQL inserts. Email is normalized to lowercase and unique;
@@ -122,23 +122,22 @@ npm run env:local --workspace=@amani/core-api
 
 `env:local` reads the root `.env` with Node's parser, copies only PostgreSQL host,
 port, database and **CORE_PLATFORM_DB_PASSWORD**, and adds missing keys to the Core
-`.env`. Existing values are preserved, secrets are never printed, and file mode is
-600. If an existing Core value is wrong, correct it manually. Root `.env` is not
+`.env`. Existing values are preserved, secrets are never printed, and file mode is 600. If an existing Core value is wrong, correct it manually. Root `.env` is not
 implicitly loaded by normal application startup. Core build and development-start hooks also build the four shared packages first,
 so a fresh checkout does not depend on pre-existing package artifacts. npm workspace commands run inside
 `apps/core-api`; Node loads that directory's optional `.env`, preserving shell overrides.
 
-| Variable | Source / behavior |
-| --- | --- |
-| `APP_ENV` | `development` by default; development/test/staging/production |
-| `HOST`, `PORT` | `127.0.0.1`, `4001`; bounded port validation |
-| `DB_HOST` | Root `POSTGRES_HOST`, normally `127.0.0.1` on the host |
-| `DB_PORT` | Root `POSTGRES_PORT`; **15432 on this PC**, Compose default 5432 |
-| `DB_NAME` | Root `POSTGRES_DB`, currently `amani` |
-| `CORE_PLATFORM_DB_PASSWORD` | Existing matching service password from root `.env` |
-| `DB_SSL` | False for local development; verified TLS required in staging/production |
-| `DB_POOL_SIZE` | Default 10, allowed 1–30 |
-| `CORE_DB_TESTS` | Explicit `true` opt-in for the integration test command only |
+| Variable                    | Source / behavior                                                        |
+| --------------------------- | ------------------------------------------------------------------------ |
+| `APP_ENV`                   | `development` by default; development/test/staging/production            |
+| `HOST`, `PORT`              | `127.0.0.1`, `4001`; bounded port validation                             |
+| `DB_HOST`                   | Root `POSTGRES_HOST`, normally `127.0.0.1` on the host                   |
+| `DB_PORT`                   | Root `POSTGRES_PORT`; **15432 on this PC**, Compose default 5432         |
+| `DB_NAME`                   | Root `POSTGRES_DB`, currently `amani`                                    |
+| `CORE_PLATFORM_DB_PASSWORD` | Existing matching service password from root `.env`                      |
+| `DB_SSL`                    | False for local development; verified TLS required in staging/production |
+| `DB_POOL_SIZE`              | Default 10, allowed 1–30                                                 |
+| `CORE_DB_TESTS`             | Explicit `true` opt-in for the integration test command only             |
 
 Service name is fixed to `@amani/core-api`. Logging uses Nest startup/warning messages
 and fixed connection-failure messages; no SQL query, parameter, body, token, password
@@ -274,21 +273,21 @@ The domain layer independently rechecks database membership and permissions.
 Non-tenant actions (identity provisioning and organization creation) have explicitly
 separate operation scopes; they are not fabricated tenant-wide grants.
 
-| Routes | Foundation |
-| --- | --- |
-| `POST /users`, `GET /users/:id`, `PATCH /users/me` | Platform-provisioned identity, self/platform read, self display name |
-| `POST /organizations`, `GET/PATCH /organizations/:organizationId` | Atomic creation, authorized read/name update |
-| `POST /organizations/:organizationId/memberships` | Add existing active user; no invitation mail |
-| `GET .../memberships/by-user/:id`, `PATCH .../memberships/:id` | Scoped lookup and membership status |
-| `GET/POST .../teams`, `POST .../teams/:id/members`, `DELETE .../teams/:id/members/:membershipId` | Teams and scoped membership links |
-| `GET/POST .../roles`, `POST/DELETE .../roles/:id/permissions` | Custom roles and canonical permission assignment |
-| `POST .../memberships/:id/roles`, `DELETE .../memberships/:id/roles/:roleId` | Multiple role assignment/revocation |
-| `GET /plugins/:pluginKey`, `POST .../plugins`, `GET/PATCH .../plugins/:id` | Catalog, request, installation state |
-| `GET /plans`, `GET .../permissions`, `GET .../audit` | Metadata and bounded organization audit reads |
-| `POST /internal/authorization/check` | `{organizationId, permission, pluginKey?}` for the verified user |
-| `GET /internal/authorization/effective-permissions?organizationId=...` | Current effective permissions for verified user |
-| `GET /internal/plugins/:pluginKey/access?organizationId=...` | Current user/plugin access decision |
-| `GET /internal/organizations/:organizationId/memberships/:id` | Membership of user `:id`, requiring `members.read` |
+| Routes                                                                                           | Foundation                                                           |
+| ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| `POST /users`, `GET /users/:id`, `PATCH /users/me`                                               | Platform-provisioned identity, self/platform read, self display name |
+| `POST /organizations`, `GET/PATCH /organizations/:organizationId`                                | Atomic creation, authorized read/name update                         |
+| `POST /organizations/:organizationId/memberships`                                                | Add existing active user; no invitation mail                         |
+| `GET .../memberships/by-user/:id`, `PATCH .../memberships/:id`                                   | Scoped lookup and membership status                                  |
+| `GET/POST .../teams`, `POST .../teams/:id/members`, `DELETE .../teams/:id/members/:membershipId` | Teams and scoped membership links                                    |
+| `GET/POST .../roles`, `POST/DELETE .../roles/:id/permissions`                                    | Custom roles and canonical permission assignment                     |
+| `POST .../memberships/:id/roles`, `DELETE .../memberships/:id/roles/:roleId`                     | Multiple role assignment/revocation                                  |
+| `GET /plugins/:pluginKey`, `POST .../plugins`, `GET/PATCH .../plugins/:id`                       | Catalog, request, installation state                                 |
+| `GET /plans`, `GET .../permissions`, `GET .../audit`                                             | Metadata and bounded organization audit reads                        |
+| `POST /internal/authorization/check`                                                             | `{organizationId, permission, pluginKey?}` for the verified user     |
+| `GET /internal/authorization/effective-permissions?organizationId=...`                           | Current effective permissions for verified user                      |
+| `GET /internal/plugins/:pluginKey/access?organizationId=...`                                     | Current user/plugin access decision                                  |
+| `GET /internal/organizations/:organizationId/memberships/:id`                                    | Membership of user `:id`, requiring `members.read`                   |
 
 `...` abbreviates `/organizations/:organizationId`. The team removal route is exactly
 `DELETE /organizations/:organizationId/teams/:id/members/:membershipId`.
@@ -355,3 +354,16 @@ transport documentation, pagination, deployment packaging and separate productio
 runtime grants remain open. Keep resource ACLs in the future Plugin APIs. Ownership
 transfer, invitation acceptance, provisioning jobs, billing, resource data, RLS,
 telemetry backends and UI remain future work.
+
+## Knowledge authorization projection
+
+`POST /internal/knowledge/authorization` accepts organizationId, permission
+(knowledge.documents.read, plugins.use or plugins.manage), and optional
+subjectMembershipId (plugins.manage only). It returns the current verified actor's
+membershipId and Core decision after active membership and Knowledge entitlement checks.
+A subject is resolved within the same organization; no document ACL lives here.
+This avoids requiring members.read merely to use an individually granted document.
+The local @amani/knowledge caller uses a separate KNOWLEDGE_CORE_DEVELOPMENT_SECRET
+and is restricted to this single route/method/scope. Existing Gateway keys do not
+become Knowledge keys. Production authentication remains disabled/unselected.
+Tests for this extension are provided but NOT RUN BY REQUEST.
