@@ -12,7 +12,10 @@ import type { VerifiedIdentity } from './context';
 /** A deliberately local adapter, never a production service-auth mechanism. */
 export class DevelopmentIdentityVerifier extends IdentityVerifier {
   private readonly seen = new Map<string, number>();
-  constructor(private readonly secret: string) {
+  constructor(
+    private readonly secret: string,
+    private readonly knowledgeSecret?: string,
+  ) {
     super();
   }
   override verify(
@@ -33,10 +36,6 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
       !/^[a-f0-9]{64}$/.test(signature)
     )
       return null;
-    const expected = createHmac('sha256', Buffer.from(this.secret, 'hex'))
-      .update(encoded)
-      .digest();
-    if (!timingSafeEqual(expected, Buffer.from(signature, 'hex'))) return null;
     let raw: unknown;
     try {
       raw = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8'));
@@ -45,10 +44,25 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
     }
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
     const p = raw as Partial<DevelopmentDelegation>;
+    const knowledge = p.callingService === '@amani/knowledge';
+    const secret = knowledge ? this.knowledgeSecret : this.secret;
+    if (
+      !secret ||
+      (knowledge &&
+        (p.path !== '/internal/knowledge/authorization' ||
+          p.method !== 'POST' ||
+          p.scope?.action !== 'authorization.check' ||
+          p.scope.resourceType !== 'policy'))
+    )
+      return null;
+    const expected = createHmac('sha256', Buffer.from(secret, 'hex'))
+      .update(encoded)
+      .digest();
+    if (!timingSafeEqual(expected, Buffer.from(signature, 'hex'))) return null;
     const now = Date.now();
     if (
       p.version !== 1 ||
-      p.callingService !== '@amani/gateway' ||
+      (!knowledge && p.callingService !== '@amani/gateway') ||
       p.audience !== '@amani/core-api' ||
       !isUUID(p.userId) ||
       (p.organizationId !== undefined && !isUUID(p.organizationId)) ||
@@ -132,5 +146,14 @@ export function identityVerifier(
       'DEVELOPMENT_SERVICE_SECRET',
       'invalid_string',
     );
-  return new DevelopmentIdentityVerifier(secret);
+  const knowledgeSecret = source.KNOWLEDGE_CORE_DEVELOPMENT_SECRET;
+  if (
+    knowledgeSecret !== undefined &&
+    (!/^[a-f0-9]{64}$/.test(knowledgeSecret) || knowledgeSecret === secret)
+  )
+    throw new ConfigurationError(
+      'KNOWLEDGE_CORE_DEVELOPMENT_SECRET',
+      'invalid_string',
+    );
+  return new DevelopmentIdentityVerifier(secret, knowledgeSecret);
 }

@@ -108,3 +108,8 @@ Un ADR accepté n’est **pas** supprimé lorsqu’une décision change. Le marq
 ## Diagrammes existants et suite
 
 Le diagramme global déjà créé se trouve dans `../diagrams/01-global-architecture.png`. Les diagrammes spécialisés seront conçus après validation de cette collection. Conserver les sources Mermaid (`.mmd`) avec chaque PNG afin de les maintenir à jour.
+
+## Compléments Knowledge
+
+- [0031 — Sources d’entreprise et propriété des domaines](0031-enterprise-sources.md) — Accepté, validation manuelle requise.
+- [0032 — ACL conservatrices et uploads versionnés](0032-knowledge-access-uploads.md) — Accepté, validation manuelle requise.

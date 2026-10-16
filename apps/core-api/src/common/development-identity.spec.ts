@@ -2,7 +2,12 @@ import { createHash, createHmac, randomBytes, randomUUID } from 'node:crypto';
 import type { Request } from 'express';
 import type { RawBodyRequest } from '@nestjs/common';
 import type { DevelopmentDelegation } from '@amani/contracts';
-import type { UserId, RequestId, CorrelationId } from '@amani/types';
+import type {
+  CorrelationId,
+  OrganizationId,
+  RequestId,
+  UserId,
+} from '@amani/types';
 import {
   DevelopmentIdentityVerifier,
   identityVerifier,
@@ -50,6 +55,68 @@ function fixture(change: Record<string, unknown> = {}) {
   };
 }
 describe('Development delegation verifier', () => {
+  it('accepts Knowledge only for its bounded authorization request', async () => {
+    const knowledgeSecret = randomBytes(32).toString('hex');
+    const organizationId = randomUUID() as OrganizationId;
+    const body = JSON.stringify({
+      organizationId,
+      permission: 'plugins.use',
+    });
+    const now = Date.now();
+    const payload: DevelopmentDelegation = {
+      version: 1,
+      userId: randomUUID() as UserId,
+      organizationId,
+      requestId: randomUUID() as RequestId,
+      correlationId: randomUUID() as CorrelationId,
+      callingService: '@amani/knowledge',
+      audience: '@amani/core-api',
+      scope: { action: 'authorization.check', resourceType: 'policy' },
+      issuedAt: now,
+      expiresAt: now + 30000,
+      nonce: randomUUID(),
+      method: 'POST',
+      path: '/internal/knowledge/authorization',
+      bodySha256: createHash('sha256').update(body).digest('hex'),
+    };
+    const encoded = Buffer.from(JSON.stringify(payload)).toString('base64url');
+    const request = {
+      method: 'POST',
+      originalUrl: payload.path,
+      rawBody: Buffer.from(body),
+      headers: {
+        'x-request-id': payload.requestId,
+        'x-correlation-id': payload.correlationId,
+        'x-amani-development-context': encoded,
+        'x-amani-development-signature': createHmac(
+          'sha256',
+          Buffer.from(knowledgeSecret, 'hex'),
+        )
+          .update(encoded)
+          .digest('hex'),
+      },
+    } as unknown as RawBodyRequest<Request>;
+    expect(
+      await new DevelopmentIdentityVerifier(secret, knowledgeSecret).verify(
+        request,
+      ),
+    ).toMatchObject({ userId: payload.userId });
+    const changed = Buffer.from(
+      JSON.stringify({ ...payload, path: '/internal/authorization/check' }),
+    ).toString('base64url');
+    request.headers['x-amani-development-context'] = changed;
+    request.headers['x-amani-development-signature'] = createHmac(
+      'sha256',
+      Buffer.from(knowledgeSecret, 'hex'),
+    )
+      .update(changed)
+      .digest('hex');
+    expect(
+      await new DevelopmentIdentityVerifier(secret, knowledgeSecret).verify(
+        request,
+      ),
+    ).toBeNull();
+  });
   it('accepts a signed, bound request once and rejects replay', async () => {
     const verifier = new DevelopmentIdentityVerifier(secret);
     const { payload, request } = fixture();

@@ -31,6 +31,8 @@ service-account*.json
 local-data/
 customer-data/
 uploads/
+!plugins/knowledge/src/uploads/
+!plugins/knowledge/src/uploads/*.ts
 backups/
 *.db
 *.db-*
