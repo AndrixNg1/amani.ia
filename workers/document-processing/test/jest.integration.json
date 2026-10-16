@@ -1,7 +1,8 @@
 {
   "moduleFileExtensions": ["js", "json", "ts"],
-  "rootDir": "../src",
-  "testRegex": ".*\\.integration-spec\\.ts$",
+  "rootDir": "..",
+  "testRegex": "test/.*\\.integration-spec\\.ts$",
   "transform": { "^.+\\.ts$": "ts-jest" },
-  "testEnvironment": "node"
+  "testEnvironment": "node",
+  "moduleNameMapper": { "^(\\.{1,2}/.*)\\.js$": "$1" }
 }

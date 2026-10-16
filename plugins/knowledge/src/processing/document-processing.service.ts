@@ -56,9 +56,7 @@ function worker(identity: VerifiedIdentity) {
   if (identity.callingService !== '@amani/document-processing')
     throw new ForbiddenException();
 }
-function validJob(
-  job: KnowledgeDocumentProcessingStartV1['job'],
-): boolean {
+function validJob(job: KnowledgeDocumentProcessingStartV1['job']): boolean {
   return (
     job?.type === 'knowledge.document.ingestion.requested' &&
     job.version === 1 &&
@@ -138,14 +136,18 @@ export class DocumentProcessingService {
     body: KnowledgeDocumentProcessingStartV1,
   ): Promise<KnowledgeDocumentProcessingInputV1> {
     worker(identity);
-    if (!validJob(body.job) || !profileIsValid(body)) throw new BadRequestException();
+    if (!validJob(body.job) || !profileIsValid(body))
+      throw new BadRequestException();
     const job = body.job;
     if (
       actor.userId !== job.job.requestedBy ||
       actor.organizationId !== job.organizationId
     )
       throw new ForbiddenException();
-    const context = await this.context(job.organizationId, job.documentVersionId);
+    const context = await this.context(
+      job.organizationId,
+      job.documentVersionId,
+    );
     if (
       context.document_id !== job.documentId ||
       context.knowledge_base_id !== job.knowledgeBaseId ||
@@ -195,7 +197,10 @@ export class DocumentProcessingService {
         WHERE organization_id=${job.organizationId} AND document_version_id=${job.documentVersionId}
         FOR UPDATE
       `);
-      if (run.rows[0]?.job_id !== job.job.jobId || run.rows[0].status !== 'processing')
+      if (
+        run.rows[0]?.job_id !== job.job.jobId ||
+        run.rows[0].status !== 'processing'
+      )
         throw new ConflictException();
     });
     if (!context.storage_version_id || !context.checksum_sha256)
@@ -237,7 +242,10 @@ export class DocumentProcessingService {
       body.chunks.length > 100
     )
       throw new BadRequestException();
-    const context = await this.context(body.organizationId, body.documentVersionId);
+    const context = await this.context(
+      body.organizationId,
+      body.documentVersionId,
+    );
     const membershipId = await this.policy.assert(
       actor,
       body.organizationId,
@@ -311,7 +319,10 @@ export class DocumentProcessingService {
       body.expectedChunkCount < 1
     )
       throw new BadRequestException();
-    const context = await this.context(body.organizationId, body.documentVersionId);
+    const context = await this.context(
+      body.organizationId,
+      body.documentVersionId,
+    );
     const membershipId = await this.policy.assert(
       actor,
       body.organizationId,
@@ -330,11 +341,17 @@ export class DocumentProcessingService {
         SELECT count(*)::integer AS count FROM knowledge.document_chunks
         WHERE organization_id=${body.organizationId} AND document_version_id=${body.documentVersionId}
       `);
-      const run = await tx.execute<{ status: string; persisted_chunk_count: number }>(sql`
+      const run = await tx.execute<{
+        status: string;
+        persisted_chunk_count: number;
+      }>(sql`
         SELECT status,persisted_chunk_count FROM knowledge.document_processing_runs
         WHERE organization_id=${body.organizationId} AND job_id=${body.jobId} FOR UPDATE
       `);
-      if (context.processing_status === 'ready' && run.rows[0]?.status === 'completed')
+      if (
+        context.processing_status === 'ready' &&
+        run.rows[0]?.status === 'completed'
+      )
         return { status: 'ready', idempotent: true };
       if (
         context.processing_status !== 'processing' ||

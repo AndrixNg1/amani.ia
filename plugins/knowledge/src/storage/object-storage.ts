@@ -83,7 +83,10 @@ export class ObjectStorage {
       throw new ServiceUnavailableException();
     }
   }
-  async createDownloadUrl(key: string, versionId: string): Promise<DownloadTarget> {
+  async createDownloadUrl(
+    key: string,
+    versionId: string,
+  ): Promise<DownloadTarget> {
     try {
       const url = await getSignedUrl(
         this.client,

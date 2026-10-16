@@ -1,9 +1,9 @@
-import { Worker } from 'bullmq';
-import type { KnowledgeDocumentIngestionRequestedV1 } from '@amani/contracts';
-import { loadLocalEnvironment, workerConfig } from './config.js';
-import { DocumentProcessor } from './processor.js';
+import { Worker } from "bullmq";
+import type { KnowledgeDocumentIngestionRequestedV1 } from "@amani/contracts";
+import { loadLocalEnvironment, workerConfig } from "./config.js";
+import { DocumentProcessor } from "./processor.js";
 
-async function bootstrap() {
+function bootstrap() {
   loadLocalEnvironment();
   const config = workerConfig();
   const processor = new DocumentProcessor(config);
@@ -16,7 +16,7 @@ async function bootstrap() {
           job: { ...job.data.job, attempt: job.attemptsMade + 1 },
         },
         job.attemptsMade + 1,
-        typeof job.opts.attempts === 'number' ? job.opts.attempts : 1,
+        typeof job.opts.attempts === "number" ? job.opts.attempts : 1,
       ),
     {
       prefix: config.redis.prefix,
@@ -29,21 +29,21 @@ async function bootstrap() {
       lockDuration: config.worker.timeoutMs,
     },
   );
-  worker.on('completed', (job) => {
-    console.info('document_processing_completed', {
+  worker.on("completed", (job) => {
+    console.info("document_processing_completed", {
       jobId: job.id,
       organizationId: job.data.organizationId,
       documentVersionId: job.data.documentVersionId,
       attempt: job.attemptsMade + 1,
     });
   });
-  worker.on('failed', (job, error) => {
-    console.warn('document_processing_failed', {
+  worker.on("failed", (job, error) => {
+    console.warn("document_processing_failed", {
       jobId: job?.id,
       organizationId: job?.data.organizationId,
       documentVersionId: job?.data.documentVersionId,
       attempt: job?.attemptsMade,
-      code: error instanceof Error ? error.name : 'PROCESSING_FAILURE',
+      code: error instanceof Error ? error.name : "PROCESSING_FAILURE",
     });
   });
   let stopping = false;
@@ -53,11 +53,15 @@ async function bootstrap() {
     await worker.pause();
     await worker.close();
   };
-  process.once('SIGINT', () => void shutdown());
-  process.once('SIGTERM', () => void shutdown());
+  process.once("SIGINT", () => void shutdown());
+  process.once("SIGTERM", () => void shutdown());
 }
 
-void bootstrap().catch(() => {
-  console.error('Document processing worker startup failed. Check configuration.');
+try {
+  bootstrap();
+} catch {
+  console.error(
+    "Document processing worker startup failed. Check configuration.",
+  );
   process.exitCode = 1;
-});
+}

@@ -5,11 +5,7 @@ import type {
   KnowledgeDocumentProcessingFailureV1,
   KnowledgeDocumentProcessingStartV1,
 } from '@amani/contracts';
-import {
-  CurrentActor,
-  CurrentIdentity,
-  Operation,
-} from '../common/context';
+import { CurrentActor, CurrentIdentity, Operation } from '../common/context';
 import type { Actor, VerifiedIdentity } from '../common/context';
 import { DocumentProcessingService } from './document-processing.service';
 

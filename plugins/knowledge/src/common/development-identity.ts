@@ -98,10 +98,16 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
       if (expiry <= now) this.seen.delete(nonce);
     if (this.seen.has(p.nonce) || this.seen.size >= 10000) return null;
     this.seen.set(p.nonce, p.expiresAt!);
+    const callingService = p.callingService;
+    if (
+      callingService !== '@amani/gateway' &&
+      callingService !== '@amani/document-processing'
+    )
+      return null;
     return {
       userId: p.userId!,
       organizationId: p.organizationId,
-      callingService: p.callingService,
+      callingService,
       audience: p.audience,
       scope: p.scope,
       expiresAt: new Date(p.expiresAt!).toISOString(),

@@ -13,11 +13,7 @@ const vector = customType<{ data: readonly number[]; driverData: string }>({
   dataType: () => 'extensions.vector',
   toDriver: (value) => `[${value.join(',')}]`,
   fromDriver: (value) =>
-    value
-      .slice(1, -1)
-      .split(',')
-      .filter(Boolean)
-      .map(Number),
+    value.slice(1, -1).split(',').filter(Boolean).map(Number),
 });
 const id = () => uuid('id').primaryKey().defaultRandom();
 const organizationId = () => uuid('organization_id').notNull();
@@ -93,30 +89,33 @@ export const documentProcessingOutbox = knowledge.table(
     ...dates(),
   },
 );
-export const documentProcessingRuns = knowledge.table('document_processing_runs', {
-  id: id(),
-  organizationId: organizationId(),
-  documentVersionId: uuid('document_version_id').notNull(),
-  ingestionRequestId: uuid('ingestion_request_id').notNull(),
-  jobId: uuid('job_id').notNull(),
-  status: text('status').notNull(),
-  extractionVersion: integer('extraction_version').notNull(),
-  normalizationVersion: integer('normalization_version').notNull(),
-  chunkingVersion: integer('chunking_version').notNull(),
-  chunkSize: integer('chunk_size').notNull(),
-  chunkOverlap: integer('chunk_overlap').notNull(),
-  embeddingProvider: text('embedding_provider').notNull(),
-  embeddingModel: text('embedding_model').notNull(),
-  embeddingDimension: integer('embedding_dimension').notNull(),
-  embeddingConfigVersion: integer('embedding_config_version').notNull(),
-  expectedChunkCount: integer('expected_chunk_count'),
-  persistedChunkCount: integer('persisted_chunk_count').notNull(),
-  failureCode: text('failure_code'),
-  failureMessageSafe: text('failure_message_safe'),
-  startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
-  completedAt: timestamp('completed_at', { withTimezone: true }),
-  ...dates(),
-});
+export const documentProcessingRuns = knowledge.table(
+  'document_processing_runs',
+  {
+    id: id(),
+    organizationId: organizationId(),
+    documentVersionId: uuid('document_version_id').notNull(),
+    ingestionRequestId: uuid('ingestion_request_id').notNull(),
+    jobId: uuid('job_id').notNull(),
+    status: text('status').notNull(),
+    extractionVersion: integer('extraction_version').notNull(),
+    normalizationVersion: integer('normalization_version').notNull(),
+    chunkingVersion: integer('chunking_version').notNull(),
+    chunkSize: integer('chunk_size').notNull(),
+    chunkOverlap: integer('chunk_overlap').notNull(),
+    embeddingProvider: text('embedding_provider').notNull(),
+    embeddingModel: text('embedding_model').notNull(),
+    embeddingDimension: integer('embedding_dimension').notNull(),
+    embeddingConfigVersion: integer('embedding_config_version').notNull(),
+    expectedChunkCount: integer('expected_chunk_count'),
+    persistedChunkCount: integer('persisted_chunk_count').notNull(),
+    failureCode: text('failure_code'),
+    failureMessageSafe: text('failure_message_safe'),
+    startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+    ...dates(),
+  },
+);
 export const documentChunks = knowledge.table('document_chunks', {
   id: id(),
   organizationId: organizationId(),
