@@ -184,6 +184,7 @@ export type {
   KnowledgeAuthorizationResponse,
   KnowledgeDocumentIngestionRequestedV1,
   KnowledgeProcessingFailureCode,
+  KnowledgeDocumentProcessingStartV1,
   KnowledgeDocumentProcessingInputV1,
   KnowledgeDocumentProcessingChunkV1,
   KnowledgeDocumentProcessingBatchV1,

@@ -58,6 +58,20 @@ export type KnowledgeProcessingFailureCode =
   | 'PROCESSING_TIMEOUT'
   | 'PERSISTENCE_FAILED';
 
+export interface KnowledgeDocumentProcessingStartV1 {
+  readonly type: 'knowledge.document.processing.start';
+  readonly version: 1;
+  readonly job: KnowledgeDocumentIngestionRequestedV1;
+  readonly normalizationVersion: number;
+  readonly chunkingVersion: number;
+  readonly chunkSize: number;
+  readonly chunkOverlap: number;
+  readonly embeddingProvider: string;
+  readonly embeddingModel: string;
+  readonly embeddingDimension: number;
+  readonly embeddingConfigVersion: number;
+}
+
 /** Bounded, short-lived input issued by Knowledge after current-state revalidation. */
 export interface KnowledgeDocumentProcessingInputV1 {
   readonly type: 'knowledge.document.processing.input';

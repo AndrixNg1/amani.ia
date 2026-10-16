@@ -4,7 +4,10 @@ import { resolve } from 'node:path';
 import { sql } from 'drizzle-orm';
 import type { Session } from './database';
 import { verifyDatabaseIdentity } from './database';
-export const migrationFiles = ['0001_knowledge.sql'] as const;
+export const migrationFiles = [
+  '0001_knowledge.sql',
+  '0002_document_processing.sql',
+] as const;
 export async function migrateInTransaction(db: Session) {
   await verifyDatabaseIdentity(db);
   await db.execute(sql`SELECT pg_catalog.pg_advisory_xact_lock(705001)`);
