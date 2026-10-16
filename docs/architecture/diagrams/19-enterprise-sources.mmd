@@ -6,7 +6,7 @@ flowchart TD
   Connectors -. structured .-> Analytics[Data Analytics - future]
   Source --> Documents[Documents and immutable versions]
   Documents -.-> Worker[Document worker - future]
-  Worker -.-> Retrieval[Authorized retrieval - future]
+  Worker --> Retrieval[Phase 7 authorized retrieval]
   Analytics -.-> Datasets[Datasets]
   Datasets -.-> Python[Python Data Engine - future]
   Retrieval -.-> AI[AI Orchestrator - future]

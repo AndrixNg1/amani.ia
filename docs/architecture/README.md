@@ -58,12 +58,23 @@ These containers support future relational/vector storage, queues/cache, and obj
 | Gateway routing and backend clients | Explicit Core routes, bounded fetch, validation, errors, CORS, limits and safe logs |
 | Identity verification, service authentication, organization authorization | Core tenant policy implemented; local-only identity/service adapters; production IAM/service mechanism pending |
 | Knowledge resource access guards and tenant isolation | Implemented for Knowledge; other plugins remain future work |
-| AI retrieval and model integration | Not implemented |
+| Secure Knowledge retrieval | Implemented in Knowledge; manual validation pending |
+| AI answer generation and model orchestration | Not implemented |
 | Shared packages | Four implemented packages |
 | Core/Gateway integration tests | Dedicated HTTP and PostgreSQL suites; commands in component READMEs |
 | Knowledge document processing | Current: queue, worker, extraction, normalization, chunks and embeddings; manual validation pending |
-| Secure retrieval, RAG, OCR, connectors and Data Analytics | Not implemented |
+| RAG answer generation, OCR, connectors and Data Analytics | Not implemented |
 
 Production authentication, deployment and plugin resource controls remain open. See [Gateway](../../apps/gateway/README.md) and [Core](../../apps/core-api/README.md) for implemented behavior and validation commands.
 
 [Diagrams](diagrams/README.md) show both the current repository and intended communication. [The ADR index](adr/README.md) lists the recorded decisions and their accepted/proposed status.
+
+## Secure Knowledge retrieval (16 October 2026)
+
+[Secure Knowledge retrieval](diagrams/21-secure-knowledge-retrieval.mmd) is the editable
+Mermaid source governed by ADR-0035. Core authorization and Knowledge resource grants
+form the candidate scope before the exact pgvector cosine search. Only the current
+`ready` version of active resources with a compatible embedding profile can appear in
+results. The output is authorized evidence with Knowledge-owned provenance; RAG answer
+generation and the AI Orchestrator remain future work. No renderer command is configured,
+so no PNG was generated.

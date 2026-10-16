@@ -1,8 +1,8 @@
 # Architecture diagrams
 
-This directory contains the visual architecture catalog for **Amani IA**. The PNG catalog describes the **target architecture**; editable Mermaid sources document the implemented Knowledge source foundation and document-processing flow.
+This directory contains the visual architecture catalog for **Amani IA**. The PNG catalog describes the **target architecture**; editable Mermaid sources document the implemented Knowledge source foundation, document-processing and secure retrieval flows.
 
-> **Implementation status:** The Next.js and NestJS applications are initialized, and local infrastructure configuration is prepared. Authentication, service-to-service clients, policy enforcement, persistent business data, queues, and AI/RAG integrations remain planned until implemented and verified.
+> **Implementation status:** Core policy enforcement, Gateway routing, Knowledge resource controls, document processing and secure Knowledge retrieval are implemented. Production identity/IAM, deployment, AI answer generation, RAG orchestration and the remaining product plugins are still planned or require manual verification.
 
 ## 00 — Global architecture — target design
 
@@ -53,6 +53,14 @@ Use the diagram links to open the full-resolution PNG. The preview column provid
 | 16 | [Roles and permissions model](./16-roles-and-permissions-model.png) | Organization-specific roles and scoped access to plugins and resources | <img src="./16-roles-and-permissions-model.png" alt="Amani IA — Roles and permissions model" width="170"> | [ADR-0012](../adr/0012-roles-permissions-resources.md) |
 | 17 | [Frontend architecture](./17-frontend-architecture.png) | Website, SaaS Admin, Enterprise Portal, and reusable Next.js UI | <img src="./17-frontend-architecture.png" alt="Amani IA — Frontend architecture" width="170"> | [ADR-0025](../adr/0025-nextjs-frontends.md) |
 | 18 | [Deployment diagram](./18-deployment-diagram.png) | Logical environments, independent deployment, CI/CD, and operations | <img src="./18-deployment-diagram.png" alt="Amani IA — Deployment diagram" width="170"> | [ADR-0029](../adr/0029-deployment-cicd-testing.md) |
+
+## Editable Knowledge sources
+
+| Source | Scope | Related ADR |
+|---|---|---|
+| [10 Knowledge ingestion](./10-knowledge-ingestion.mmd) | Authorized upload and processing to ready chunks | ADR-0032–0034 |
+| [20 Document processing](./20-document-processing.mmd) | Worker lifecycle and bounded internal publication | ADR-0033–0034 |
+| [21 Secure Knowledge retrieval](./21-secure-knowledge-retrieval.mmd) | Authorization before pgvector retrieval; evidence only | ADR-0035 |
 
 ## How to read these visuals
 
