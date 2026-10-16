@@ -85,6 +85,8 @@ export const documentProcessingOutbox = knowledge.table(
     jobId: uuid('job_id').primaryKey(),
     organizationId: organizationId(),
     documentVersionId: uuid('document_version_id').notNull(),
+    requestedByUserId: uuid('requested_by_user_id').notNull(),
+    correlationId: text('correlation_id').notNull(),
     status: text('status').notNull(),
     publishAttempts: integer('publish_attempts').notNull(),
     publishedAt: timestamp('published_at', { withTimezone: true }),

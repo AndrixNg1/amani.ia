@@ -12,7 +12,10 @@ import type { VerifiedIdentity } from './context';
 /** Local-only adapter; production service authentication remains deliberately unselected. */
 export class DevelopmentIdentityVerifier extends IdentityVerifier {
   private readonly seen = new Map<string, number>();
-  constructor(private readonly secret: string) {
+  constructor(
+    private readonly gatewaySecret: string,
+    private readonly documentProcessingSecret: string,
+  ) {
     super();
   }
   override verify(
@@ -41,14 +44,23 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
     }
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
     const p = raw as Partial<DevelopmentDelegation>;
-    const expected = createHmac('sha256', Buffer.from(this.secret, 'hex'))
+    const secret =
+      p.callingService === '@amani/gateway'
+        ? this.gatewaySecret
+        : p.callingService === '@amani/document-processing'
+          ? this.documentProcessingSecret
+          : undefined;
+    if (!secret) return null;
+    const expected = createHmac('sha256', Buffer.from(secret, 'hex'))
       .update(encoded)
       .digest();
     if (!timingSafeEqual(expected, Buffer.from(signature, 'hex'))) return null;
     const now = Date.now();
     if (
       p.version !== 1 ||
-      p.callingService !== '@amani/gateway' ||
+      !['@amani/gateway', '@amani/document-processing'].includes(
+        p.callingService ?? '',
+      ) ||
       p.audience !== '@amani/knowledge' ||
       !isUUID(p.userId) ||
       (p.organizationId !== undefined && !isUUID(p.organizationId)) ||
@@ -124,5 +136,8 @@ export function identityVerifier(
       'KNOWLEDGE_DEVELOPMENT_SERVICE_SECRET',
       'invalid_string',
     );
-  return new DevelopmentIdentityVerifier(secret);
+  return new DevelopmentIdentityVerifier(
+    secret,
+    env.required('KNOWLEDGE_DOCUMENT_PROCESSING_DEVELOPMENT_SECRET'),
+  );
 }

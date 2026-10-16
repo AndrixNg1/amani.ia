@@ -6,6 +6,8 @@ CREATE TABLE knowledge.document_processing_outbox (
   job_id uuid PRIMARY KEY,
   organization_id uuid NOT NULL,
   document_version_id uuid NOT NULL,
+  requested_by_user_id uuid NOT NULL,
+  correlation_id text NOT NULL,
   status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','published')),
   publish_attempts integer NOT NULL DEFAULT 0 CHECK (publish_attempts >= 0),
   published_at timestamptz,
