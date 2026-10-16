@@ -36,7 +36,10 @@ The AI Orchestrator must retrieve only resources the requesting user is authoriz
 
 [Shared packages](../../packages/README.md) implement transport types, identifiers, environment parsing and safe tracing helpers. Gateway and Core consume them. Prompts, UI and SDK remain reserved. No shared ORM or authorization engine exists.
 
-[Workers](../../workers/README.md) reserve data-engine and document-processing responsibilities. Neither worker has an application, package manifest, queue integration, or runtime selected. They are outside the current root workspace patterns.
+[Workers](../../workers/README.md) contain the initialized TypeScript document-processing
+worker and the reserved Python Data Engine. The document worker is a workspace, consumes
+versioned Knowledge ingestion jobs through Redis/BullMQ, and publishes bounded results
+only through Knowledge. The Data Engine remains reserved.
 
 ## Local infrastructure
 
@@ -58,8 +61,9 @@ These containers support future relational/vector storage, queues/cache, and obj
 | AI retrieval and model integration | Not implemented |
 | Shared packages | Four implemented packages |
 | Core/Gateway integration tests | Dedicated HTTP and PostgreSQL suites; commands in component READMEs |
-| Workers and repository-wide integration tests | Reserved |
+| Knowledge document processing | Current: queue, worker, extraction, normalization, chunks and embeddings; manual validation pending |
+| Secure retrieval, RAG, OCR, connectors and Data Analytics | Not implemented |
 
 Production authentication, deployment and plugin resource controls remain open. See [Gateway](../../apps/gateway/README.md) and [Core](../../apps/core-api/README.md) for implemented behavior and validation commands.
 
-[Diagrams](diagrams/README.md) show both the current repository and intended communication. [The ADR index](adr/README.md) lists the 30 decisions and their accepted/proposed status.
+[Diagrams](diagrams/README.md) show both the current repository and intended communication. [The ADR index](adr/README.md) lists the recorded decisions and their accepted/proposed status.
