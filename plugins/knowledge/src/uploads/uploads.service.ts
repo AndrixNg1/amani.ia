@@ -11,6 +11,7 @@ import type { Actor } from '../common/context';
 import { DatabaseService } from '../database/database';
 import { ResourcePolicy } from '../authorization/resource-policy';
 import { ObjectStorage } from '../storage/object-storage';
+import { DocumentProcessingQueue } from '../processing/document-processing.queue';
 import type { InitiateUploadDto } from '../common/dto';
 import { knowledgeConfig } from '../common/config';
 export function validateUploadMetadata(
@@ -28,6 +29,7 @@ export class UploadsService {
     private readonly database: DatabaseService,
     private readonly policy: ResourcePolicy,
     private readonly storage: ObjectStorage,
+    private readonly processingQueue: DocumentProcessingQueue,
   ) {}
   private filename(name: string) {
     const sanitized = Array.from(name, (character) =>
@@ -135,8 +137,9 @@ export class UploadsService {
       storage_version_id: string | null;
       knowledge_base_id: string;
       source_id: string;
+      source_kind: 'manual_upload' | 'connector';
     }>(
-      sql`SELECT v.document_id,v.storage_key,v.mime_type,v.size_bytes,v.processing_status,v.storage_version_id,d.knowledge_base_id,d.source_id FROM knowledge.document_versions v JOIN knowledge.documents d ON d.organization_id=v.organization_id AND d.id=v.document_id WHERE v.organization_id=${org} AND v.id=${versionId}`,
+      sql`SELECT v.document_id,v.storage_key,v.mime_type,v.size_bytes,v.processing_status,v.storage_version_id,d.knowledge_base_id,d.source_id,s.source_kind FROM knowledge.document_versions v JOIN knowledge.documents d ON d.organization_id=v.organization_id AND d.id=v.document_id JOIN knowledge.knowledge_sources s ON s.organization_id=d.organization_id AND s.id=d.source_id WHERE v.organization_id=${org} AND v.id=${versionId}`,
     );
     if (!version.rows[0]) throw new NotFoundException();
     const value = version.rows[0];
@@ -148,12 +151,14 @@ export class UploadsService {
       'ingest',
     );
     if (value.processing_status !== 'awaiting_upload') {
-      if (value.processing_status === 'pending')
+      if (value.processing_status === 'pending') {
+        await this.processingQueue.publishForVersion(org, versionId);
         return {
           documentVersionId: versionId,
           status: 'pending',
           idempotent: true,
         };
+      }
       throw new ConflictException();
     }
     const object = await this.storage.head(value.storage_key);
@@ -166,7 +171,7 @@ export class UploadsService {
       value.storage_key,
       object.versionId,
     );
-    return this.database.transaction(async (tx) => {
+    const finalized = await this.database.transaction(async (tx) => {
       const updated = await tx.execute(
         sql`UPDATE knowledge.document_versions SET checksum_sha256=${checksum},storage_version_id=${object.versionId},processing_status='pending',finalized_at=now() WHERE organization_id=${org} AND id=${versionId} AND processing_status='awaiting_upload' RETURNING id`,
       );
@@ -182,8 +187,12 @@ export class UploadsService {
           };
         throw new ConflictException();
       }
+      const ingestion = await tx.execute<{ id: string }>(
+        sql`INSERT INTO knowledge.ingestion_requests(organization_id,document_version_id,requested_by_membership_id,correlation_id) VALUES(${org},${versionId},${member},${actor.correlationId}) ON CONFLICT(organization_id,document_version_id) DO UPDATE SET updated_at=knowledge.ingestion_requests.updated_at RETURNING id`,
+      );
+      const jobId = ingestion.rows[0].id;
       await tx.execute(
-        sql`INSERT INTO knowledge.ingestion_requests(organization_id,document_version_id,requested_by_membership_id,correlation_id) VALUES(${org},${versionId},${member},${actor.correlationId}) ON CONFLICT(organization_id,document_version_id) DO NOTHING`,
+        sql`INSERT INTO knowledge.document_processing_outbox(job_id,organization_id,document_version_id,requested_by_user_id,correlation_id) VALUES(${jobId},${org},${versionId},${actor.userId},${actor.correlationId}) ON CONFLICT(job_id) DO NOTHING`,
       );
       await tx.execute(
         sql`INSERT INTO knowledge.audit_events(organization_id,actor_membership_id,action,resource_type,resource_id,request_id,correlation_id) VALUES(${org},${member},'document_version.finalized','document_version',${versionId},${actor.requestId},${actor.correlationId})`,
@@ -194,5 +203,7 @@ export class UploadsService {
         checksum: { algorithm: 'sha256', value: checksum },
       };
     });
+    await this.processingQueue.publishForVersion(org, versionId);
+    return finalized;
   }
 }

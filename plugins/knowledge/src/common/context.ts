@@ -32,6 +32,7 @@ export interface VerifiedIdentity {
 }
 export type KnowledgeRequest = Request & {
   actor?: Actor;
+  identity?: VerifiedIdentity;
   correlationId?: CorrelationId;
   requestId?: string;
 };
@@ -50,6 +51,15 @@ export const CurrentActor = createParamDecorator(
     const actor = context.switchToHttp().getRequest<KnowledgeRequest>().actor;
     if (!actor) throw new ForbiddenException();
     return actor;
+  },
+);
+export const CurrentIdentity = createParamDecorator(
+  (_data: unknown, context: ExecutionContext): VerifiedIdentity => {
+    const identity = context
+      .switchToHttp()
+      .getRequest<KnowledgeRequest>().identity;
+    if (!identity) throw new ForbiddenException();
+    return identity;
   },
 );
 @Injectable()
@@ -89,6 +99,7 @@ export class TrustedIdentityGuard implements CanActivate {
     )
       throw new ForbiddenException();
     if (!request.requestId) throw new ForbiddenException();
+    request.identity = identity;
     request.actor = {
       userId: identity.userId,
       organizationId: identity.organizationId,

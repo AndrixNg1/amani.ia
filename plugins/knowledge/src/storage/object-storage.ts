@@ -12,6 +12,7 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { knowledgeConfig } from '../common/config';
 
 export interface UploadTarget {
@@ -23,6 +24,10 @@ export interface ObjectMetadata {
   contentType: string;
   contentLength: number;
   versionId: string;
+}
+export interface DownloadTarget {
+  url: string;
+  expiresAt: string;
 }
 @Injectable()
 export class ObjectStorage {
@@ -72,6 +77,30 @@ export class ObjectStorage {
         fields: result.fields,
         expiresAt: new Date(
           Date.now() + this.config.uploadUrlSeconds * 1000,
+        ).toISOString(),
+      };
+    } catch {
+      throw new ServiceUnavailableException();
+    }
+  }
+  async createDownloadUrl(
+    key: string,
+    versionId: string,
+  ): Promise<DownloadTarget> {
+    try {
+      const url = await getSignedUrl(
+        this.client,
+        new GetObjectCommand({
+          Bucket: this.config.bucket,
+          Key: key,
+          VersionId: versionId,
+        }),
+        { expiresIn: this.config.downloadUrlSeconds },
+      );
+      return {
+        url,
+        expiresAt: new Date(
+          Date.now() + this.config.downloadUrlSeconds * 1000,
         ).toISOString(),
       };
     } catch {

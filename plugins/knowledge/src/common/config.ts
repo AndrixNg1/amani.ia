@@ -55,9 +55,14 @@ export function knowledgeConfig(source: EnvironmentSource = process.env) {
     development === 'development'
       ? env.required('KNOWLEDGE_CORE_DEVELOPMENT_SECRET')
       : undefined;
+  const processingSecret =
+    development === 'development'
+      ? env.required('KNOWLEDGE_DOCUMENT_PROCESSING_DEVELOPMENT_SECRET')
+      : undefined;
   if (
     (serviceSecret && !/^[a-f0-9]{64}$/.test(serviceSecret)) ||
-    (coreSecret && !/^[a-f0-9]{64}$/.test(coreSecret))
+    (coreSecret && !/^[a-f0-9]{64}$/.test(coreSecret)) ||
+    (processingSecret && !/^[a-f0-9]{64}$/.test(processingSecret))
   ) {
     throw new ConfigurationError(
       'KNOWLEDGE_DEVELOPMENT_SERVICE_SECRET',
@@ -72,6 +77,7 @@ export function knowledgeConfig(source: EnvironmentSource = process.env) {
     authMode: development,
     developmentServiceSecret: serviceSecret,
     coreDevelopmentSecret: coreSecret,
+    documentProcessingDevelopmentSecret: processingSecret,
     coreUrl: env.url('CORE_API_URL', { default: 'http://127.0.0.1:4001' }),
     coreTimeoutMs: env.integer('CORE_API_TIMEOUT_MS', {
       default: 3000,
@@ -106,6 +112,11 @@ export function knowledgeConfig(source: EnvironmentSource = process.env) {
         min: 30,
         max: 900,
       }),
+      downloadUrlSeconds: env.integer('KNOWLEDGE_DOWNLOAD_URL_SECONDS', {
+        default: 120,
+        min: 30,
+        max: 300,
+      }),
       maxUploadBytes: env.integer('KNOWLEDGE_MAX_UPLOAD_BYTES', {
         default: 52_428_800,
         min: 1,
@@ -115,6 +126,17 @@ export function knowledgeConfig(source: EnvironmentSource = process.env) {
         env.required('KNOWLEDGE_ALLOWED_MIME_TYPES'),
         'KNOWLEDGE_ALLOWED_MIME_TYPES',
       ),
+    },
+    processingQueue: {
+      redisHost: env.required('KNOWLEDGE_PROCESSING_REDIS_HOST'),
+      redisPort: env.integer('KNOWLEDGE_PROCESSING_REDIS_PORT', {
+        default: 6379,
+        min: 1,
+        max: 65535,
+      }),
+      redisPassword: env.required('KNOWLEDGE_PROCESSING_REDIS_PASSWORD'),
+      prefix: env.required('KNOWLEDGE_PROCESSING_QUEUE_PREFIX'),
+      name: 'document-processing',
     },
   };
 }
