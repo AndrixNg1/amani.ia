@@ -68,7 +68,11 @@ export class DocumentProcessor {
     this.client = new KnowledgeClient(config.knowledge);
   }
 
-  async process(job: KnowledgeDocumentIngestionRequestedV1) {
+  async process(
+    job: KnowledgeDocumentIngestionRequestedV1,
+    attempt: number,
+    maxAttempts: number,
+  ) {
     try {
       if (job.job.expiresAt && Date.parse(job.job.expiresAt) <= Date.now())
         throw new ProcessingError('DOCUMENT_VERSION_STALE');
@@ -135,17 +139,23 @@ export class DocumentProcessor {
       });
     } catch (error) {
       const code = processingFailure(error);
-      try {
-        await this.client.fail(job, {
-          type: 'knowledge.document.processing.failed',
-          version: 1,
-          jobId: job.job.jobId,
-          organizationId: job.organizationId,
-          documentVersionId: job.documentVersionId,
-          code,
-        });
-      } catch {
-        // Queue retry is responsible for recovery; never log document data or URLs.
+      if (
+        attempt >= maxAttempts ||
+        code === 'AUTHORIZATION_REVOKED' ||
+        code === 'DOCUMENT_VERSION_STALE'
+      ) {
+        try {
+          await this.client.fail(job, {
+            type: 'knowledge.document.processing.failed',
+            version: 1,
+            jobId: job.job.jobId,
+            organizationId: job.organizationId,
+            documentVersionId: job.documentVersionId,
+            code,
+          });
+        } catch {
+          // Queue retry is responsible for recovery; never log document data or URLs.
+        }
       }
       throw error;
     }

@@ -9,10 +9,15 @@ async function bootstrap() {
   const processor = new DocumentProcessor(config);
   const worker = new Worker<KnowledgeDocumentIngestionRequestedV1>(
     config.redis.name,
-    async (job) => processor.process({
-      ...job.data,
-      job: { ...job.data.job, attempt: job.attemptsMade + 1 },
-    }),
+    async (job) =>
+      processor.process(
+        {
+          ...job.data,
+          job: { ...job.data.job, attempt: job.attemptsMade + 1 },
+        },
+        job.attemptsMade + 1,
+        typeof job.opts.attempts === 'number' ? job.opts.attempts : 1,
+      ),
     {
       prefix: config.redis.prefix,
       connection: {
