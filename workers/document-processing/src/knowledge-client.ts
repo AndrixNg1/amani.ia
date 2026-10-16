@@ -8,7 +8,12 @@ import type {
   KnowledgeDocumentProcessingInputV1,
   KnowledgeDocumentProcessingStartV1,
 } from '@amani/contracts';
-import type { CorrelationId, RequestId, UserId } from '@amani/types';
+import type {
+  CorrelationId,
+  OrganizationId,
+  RequestId,
+  UserId,
+} from '@amani/types';
 import { ProcessingError } from './errors.js';
 
 function input(value: unknown): value is KnowledgeDocumentProcessingInputV1 {
@@ -36,7 +41,7 @@ export class KnowledgeClient {
     const payload: DevelopmentDelegation = {
       version: 1,
       userId: job.job.requestedBy as UserId,
-      organizationId: job.organizationId as never,
+      organizationId: job.organizationId as OrganizationId,
       requestId,
       correlationId: job.job.correlationId as CorrelationId,
       callingService: '@amani/document-processing',

@@ -52,6 +52,8 @@ function provider(config: Config) {
       config.embedding.dimension,
       config.embedding.configVersion,
     );
+  if (!('baseUrl' in config.embedding) || !('apiKey' in config.embedding))
+    throw new ProcessingError('EMBEDDING_PROVIDER_UNAVAILABLE');
   return new OpenAiCompatibleEmbeddingProvider(
     config.embedding.model,
     config.embedding.dimension,

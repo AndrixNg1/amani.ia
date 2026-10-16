@@ -3,7 +3,13 @@ import type { OnApplicationShutdown } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { sql } from 'drizzle-orm';
 import type { KnowledgeDocumentIngestionRequestedV1 } from '@amani/contracts';
-import type { JobId, OrganizationId, ResourceId, UserId } from '@amani/types';
+import type {
+  CorrelationId,
+  JobId,
+  OrganizationId,
+  ResourceId,
+  UserId,
+} from '@amani/types';
 import { DatabaseService } from '../database/database';
 import { knowledgeConfig } from '../common/config';
 
@@ -86,7 +92,7 @@ export class DocumentProcessingQueue implements OnApplicationShutdown {
         jobVersion: 1,
         organizationId: row.organization_id as OrganizationId,
         requestedBy: row.requested_by_user_id as UserId,
-        correlationId: row.correlation_id,
+        correlationId: row.correlation_id as CorrelationId,
         createdAt: row.created_at.toISOString(),
         attempt: 1,
         owner: '@amani/knowledge',
