@@ -6,10 +6,11 @@ Plugin APIs and three Next.js frontends. Four shared packages, local infrastruct
 Core Platform persistence/authorization and explicit Gateway routing are implemented.
 
 **Current status:** Core owns tenant policy and platform data;
-Gateway applies HTTP controls and calls Core with bounded context. Both services deny
-business calls by default. Authentication adapters are local-development-only;
-production IAM and service authentication remain architecture decisions. Plugins,
-workers, Orchestrator and frontend business features remain future work. Component
+Gateway applies HTTP controls and calls Core with bounded context. Knowledge owns its
+documentary domain and a separate worker processes accepted document versions through
+bounded internal contracts. Authentication adapters are local-development-only;
+production IAM and service authentication remain architecture decisions. Secure
+retrieval, RAG, Orchestrator and frontend business features remain future work. Component
 READMEs describe configuration, commands and tests.
 
 ## Architecture
@@ -44,7 +45,7 @@ Compose provisions local dependencies only; no application containers are added.
 | `apps/` | Gateway, Core API, AI Orchestrator, Admin, Enterprise, Website; initialized |
 | `plugins/` | Knowledge, Data Analytics, Conversations, Connectors, Evaluation; initialized |
 | `packages/` | `config`, `contracts`, `shared`, `types` implemented; `prompts`, `sdk`, `ui` reserved |
-| `workers/` | `data-engine`, `document-processing`; not initialized |
+| `workers/` | Document Processing worker implemented; Python Data Engine reserved |
 | `infrastructure/` | Local PostgreSQL, Redis, storage configuration; Docker, gateway, observability documentation |
 | `docs/` | Architecture, diagrams, decision status and license decision |
 | `scripts/` | Dependency-free structural inspection |
@@ -69,7 +70,8 @@ The root `package.json` is the workspace source of truth:
 ```
 
 Only directories with a `package.json` are npm packages. There are currently
-**15 initialized workspaces**, including **four shared packages**. New shared
+**16 initialized workspaces**, including **four shared packages** and the document
+processing worker. New shared
 packages must use `@amani/<name>` and real check scripts. Workers are not npm
 workspaces until their runtime and initialization are decided. The obsolete
 `npm-workspace.yaml` has been removed. See the [npm workspace documentation](https://docs.npmjs.com/cli/v10/using-npm/workspaces/).

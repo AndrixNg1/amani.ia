@@ -8,8 +8,9 @@ schema is `knowledge` and its fixed PostgreSQL login is `amani_knowledge`.
 It does not own users, memberships, roles, plans, plugin installation or entitlement:
 Core Platform decides those. It does not own connector credentials or synchronization:
 the future Connectors plugin does. It does not own datasets, database queries or
-calculations: Data Analytics does. It does not parse documents, create chunks,
-embeddings, retrieval, RAG, queues, workers or LLM calls in Phase 5.
+calculations: Data Analytics does. Knowledge owns document-processing state, chunks and
+embeddings; the separate worker performs bounded computation through internal APIs. It
+does not implement retrieval, RAG, question answering or LLM chat.
 
 ## Sources and ownership
 
@@ -46,11 +47,25 @@ are membership-scoped with no cross-schema foreign key to Core. Every lookup inc
 The service generates an opaque key (`knowledge/<tenant>/<document>/<version>/original`),
 requires a private, versioned bucket, verifies exact metadata, pins its S3 VersionId and
 hashes that exact object with SHA-256. PostgreSQL retains metadata and the pinned object
-reference; MinIO stores only the binary. `pending` creates one durable future-worker
-intent. Retried initiation with the same key and payload returns the original intent;
+reference; MinIO stores only the binary. `pending` creates one durable ingestion intent
+and outbox record. BullMQ delivers its versioned contract to the document-processing
+worker at least once. The worker asks Knowledge to revalidate the document, tenant and
+requester's current rights before it receives a short-lived pinned download URL, and
+again before it publishes chunks or marks the version ready. Retried initiation with
+the same key and payload returns the original intent;
 retrying finalization does not create a new version or job. SQL and object storage are
 not one transaction: unfinalized private objects require operator lifecycle cleanup.
 Archiving is logical only; it never silently deletes evidence or future citations.
+
+## Processing lifecycle
+
+`pending → processing → ready` is the successful lifecycle. A bounded retry keeps the
+same job ID and may re-enter `processing`; duplicate batches upsert the same chunk index.
+After the final attempt, Knowledge records `failed` with a safe code. `ready` is only
+set after the expected number of chunks and embeddings exists in the Knowledge schema.
+The worker supports PDF text extraction, DOCX, UTF-8 TXT and Markdown. PDF without
+extractable text fails safely; OCR, external URL fetching, macro execution, retrieval
+and RAG are not implemented. See the worker README and ADR-0033/0034.
 
 ## Environment and manual commands
 
