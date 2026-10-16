@@ -1,0 +1,13 @@
+flowchart TD
+  Upload[Manual documentary upload] --> Source[KnowledgeSource]
+  Documentary[Notion Drive SharePoint - future] -.-> Connectors[Connectors - future]
+  Structured[PostgreSQL MySQL SQL Server Excel CSV - future] -.-> Connectors
+  Connectors -. documentary .-> Source
+  Connectors -. structured .-> Analytics[Data Analytics - future]
+  Source --> Documents[Documents and immutable versions]
+  Documents -.-> Worker[Document worker - future]
+  Worker -.-> Retrieval[Authorized retrieval - future]
+  Analytics -.-> Datasets[Datasets]
+  Datasets -.-> Python[Python Data Engine - future]
+  Retrieval -.-> AI[AI Orchestrator - future]
+  Python -. structured result .-> AI

@@ -25,15 +25,15 @@ export interface DevelopmentDelegation {
   readonly version: 1;
   readonly requestId: RequestId;
   readonly correlationId: CorrelationId;
-  readonly callingService: '@amani/gateway';
-  readonly audience: '@amani/core-api';
+  readonly callingService: '@amani/gateway' | '@amani/knowledge';
+  readonly audience: '@amani/core-api' | '@amani/knowledge';
   readonly userId: UserId;
   readonly organizationId?: OrganizationId;
   readonly scope: AuthorizationScope;
   readonly issuedAt: number;
   readonly expiresAt: number;
   readonly nonce: string;
-  readonly method: 'GET' | 'POST';
+  readonly method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   readonly path: string;
   readonly bodySha256: string;
 }
@@ -174,3 +174,5 @@ export interface JobMetadata {
   readonly idempotencyKey?: string;
   readonly expiresAt?: IsoTimestamp;
 }
+
+export type { SourceReference, KnowledgeAuthorizationRequest, KnowledgeAuthorizationResponse, KnowledgeDocumentIngestionRequestedV1 } from './knowledge';

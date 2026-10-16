@@ -148,3 +148,12 @@ sequenceDiagram
 ```
 
 The policy authority interaction is conceptual: no endpoint or token protocol has been selected. All denial paths must stop data access, including failures at the gateway or orchestrator.
+
+## Enterprise source foundation (15 October 2026)
+
+[Enterprise sources](19-enterprise-sources.mmd) and [Knowledge ingestion source](10-knowledge-ingestion.mmd)
+are editable Mermaid sources governed by ADR-0031/0032. Manual upload is one source;
+external connectors and all structured Analytics flows remain future work. The older
+PNG ingestion illustration has not been regenerated. No renderer command is configured
+in this repository; render these sources with a reviewed Mermaid tool when exporting.
+No PNG or runtime validation was generated/executed for this change.

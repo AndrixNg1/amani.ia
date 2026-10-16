@@ -67,3 +67,10 @@ export class AuthorizationCheckDto extends PermissionDto {
 export class PluginKeyParam {
   @IsString() @Length(1, 80) @Matches(/^[a-z][a-z0-9-]*$/) pluginKey!: string;
 }
+
+export class KnowledgeAuthorizationDto {
+  @IsUUID() organizationId!: string;
+  @IsIn(['knowledge.documents.read', 'plugins.use', 'plugins.manage'])
+  permission!: 'knowledge.documents.read' | 'plugins.use' | 'plugins.manage';
+  @IsOptional() @IsUUID() subjectMembershipId?: string;
+}

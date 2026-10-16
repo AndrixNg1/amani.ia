@@ -1,0 +1,12 @@
+flowchart TD
+  Manual[Manual source] --> Intent[Authorized upload intent]
+  External[Documentary connector - future] -.-> Source[KnowledgeSource with opaque provenance]
+  Manual --> Source
+  Source --> Doc[Document]
+  Intent --> S3[Private versioned S3 POST]
+  S3 --> Verify[HEAD and bounded SHA256 of pinned VersionId]
+  Verify --> Version[Finalize document version]
+  Doc --> Version
+  Version --> Job[Transactional ingestion request V1]
+  Job -.-> Worker[Document worker - future]
+  Worker -.-> Index[Chunks embeddings retrieval - future]
