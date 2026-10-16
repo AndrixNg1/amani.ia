@@ -1,0 +1,47 @@
+{
+  "name": "@amani/document-processing",
+  "version": "0.0.1",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" --fix",
+    "lint:check": "eslint \"src/**/*.ts\" \"test/**/*.ts\" --max-warnings=0",
+    "typecheck": "tsc --noEmit --incremental false",
+    "test": "jest --runInBand",
+    "test:integration": "jest --config test/jest.integration.json --runInBand"
+  },
+  "dependencies": {
+    "@amani/config": "0.1.0",
+    "@amani/contracts": "0.1.0",
+    "@amani/shared": "0.1.0",
+    "@amani/types": "0.1.0",
+    "bullmq": "^5.66.5",
+    "mammoth": "^1.9.1",
+    "pdf-parse": "^1.1.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.0.0",
+    "@types/pdf-parse": "^1.1.4",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.2",
+    "globals": "^17.0.0",
+    "jest": "^30.0.0",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0"
+  },
+  "jest": {
+    "moduleFileExtensions": ["js", "json", "ts"],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": { "^.+\\.ts$": "ts-jest" },
+    "testEnvironment": "node"
+  }
+}
