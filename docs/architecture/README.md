@@ -57,7 +57,7 @@ These containers support future relational/vector storage, queues/cache, and obj
 | PostgreSQL/pgvector, Redis, and MinIO | Validated local infrastructure; Core uses PostgreSQL, Gateway needs no Redis/MinIO |
 | Gateway routing and backend clients | Explicit Core routes, bounded fetch, validation, errors, CORS, limits and safe logs |
 | Identity verification, service authentication, organization authorization | Core tenant policy implemented; local-only identity/service adapters; production IAM/service mechanism pending |
-| Plugin resource access guards and tenant isolation | Required; not implemented |
+| Knowledge resource access guards and tenant isolation | Implemented for Knowledge; other plugins remain future work |
 | AI retrieval and model integration | Not implemented |
 | Shared packages | Four implemented packages |
 | Core/Gateway integration tests | Dedicated HTTP and PostgreSQL suites; commands in component READMEs |

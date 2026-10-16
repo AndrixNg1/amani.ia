@@ -95,7 +95,8 @@ flowchart TB
         redis["Redis :6379"]
         minio["MinIO API :9000 / console :9001"]
     end
-    placeholders["Documentation placeholders: packages / workers / root tests"]
+    worker["document-processing worker"]
+    placeholders["Reserved: Python Data Engine / root integration tests"]
 ```
 
 ## Intended backend architecture
@@ -111,8 +112,9 @@ flowchart LR
     plugins -. "Membership and permission verification" .-> core
     plugins -. "Tenant-scoped data access" .-> storage["PostgreSQL / pgvector / MinIO"]
     plugins -. "Scoped background jobs and cache" .-> redis["Redis"]
-    redis -. "Jobs with verified scope" .-> workers["Planned workers"]
-    workers -. "Authorized, tenant-scoped processing" .-> storage
+    redis --> worker["Document processing worker"]
+    worker -->|"Revalidated, bounded processing"| knowledge
+    knowledge -->|"Owned chunks and embeddings"| storage
 ```
 
 Storage ownership, transport credentials, permission lookup protocols, and job processing are not yet implemented. The diagram groups the five Plugin APIs for readability; it does not combine them into a single service.
