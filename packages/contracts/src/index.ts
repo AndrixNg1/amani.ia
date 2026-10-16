@@ -190,4 +190,6 @@ export type {
   KnowledgeDocumentProcessingBatchV1,
   KnowledgeDocumentProcessingCompletionV1,
   KnowledgeDocumentProcessingFailureV1,
+  KnowledgeRetrievalResultV1,
+  KnowledgeRetrievalResponseV1,
 } from './knowledge';

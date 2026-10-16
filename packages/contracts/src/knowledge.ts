@@ -129,3 +129,41 @@ export interface KnowledgeDocumentProcessingFailureV1 {
   readonly documentVersionId: string;
   readonly code: KnowledgeProcessingFailureCode;
 }
+
+/** Evidence returned by Knowledge after tenant and resource filtering. */
+export interface KnowledgeRetrievalResultV1 {
+  readonly chunkId: string;
+  readonly organizationId: string;
+  readonly knowledgeBaseId: string;
+  readonly sourceId: string;
+  readonly documentId: string;
+  readonly documentVersionId: string;
+  readonly documentTitle: string;
+  readonly chunkIndex: number;
+  readonly content: string;
+  readonly contentChecksum: string;
+  readonly sectionReference: string | null;
+  readonly pageNumber: number | null;
+  /** Cosine similarity (1 - cosine distance), not a confidence value. */
+  readonly similarityScore: number;
+  readonly citation: {
+    readonly knowledgeBaseId: string;
+    readonly sourceId: string;
+    readonly documentId: string;
+    readonly documentVersionId: string;
+    readonly chunkId: string;
+  };
+}
+
+export interface KnowledgeRetrievalResponseV1 {
+  readonly type: 'knowledge.retrieval.results';
+  readonly version: 1;
+  readonly retrievalProfile: {
+    readonly provider: string;
+    readonly model: string;
+    readonly dimension: number;
+    readonly configVersion: number;
+    readonly metric: 'cosine';
+  };
+  readonly results: readonly KnowledgeRetrievalResultV1[];
+}
