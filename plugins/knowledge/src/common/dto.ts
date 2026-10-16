@@ -46,3 +46,10 @@ export class InitiateUploadDto extends IdempotencyDto {
 export class PaginationQuery extends OrganizationQuery {
   @IsOptional() @IsInt() @Min(1) @Max(100) limit?: number;
 }
+export class RetrievalQueryDto extends OrganizationQuery {
+  @IsString() @Length(1, 2000) @Matches(/\S/) query!: string;
+  @IsOptional() @IsUUID() knowledgeBaseId?: string;
+  @IsOptional() @IsInt() @Min(1) @Max(50) topK?: number;
+  /** Cosine-similarity basis points; 0 means no relevance floor. */
+  @IsOptional() @IsInt() @Min(0) @Max(10000) minSimilarityBps?: number;
+}

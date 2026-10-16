@@ -88,14 +88,13 @@ export class TrustedIdentityGuard implements CanActivate {
     )
       throw new ForbiddenException();
     if (
-      request.params.organizationId &&
-      request.params.organizationId !== identity.organizationId
+      this.requestOrganizationId(request) !== undefined &&
+      this.requestOrganizationId(request) !== identity.organizationId
     )
       throw new ForbiddenException();
     if (
       identity.scope.resourceId !== undefined &&
-      (request.params.id ?? request.params.knowledgeBaseId) !==
-        identity.scope.resourceId
+      this.requestResourceId(request) !== identity.scope.resourceId
     )
       throw new ForbiddenException();
     if (!request.requestId) throw new ForbiddenException();
@@ -107,5 +106,23 @@ export class TrustedIdentityGuard implements CanActivate {
       correlationId: request.correlationId,
     };
     return true;
+  }
+  private requestOrganizationId(request: KnowledgeRequest): string | undefined {
+    const candidate =
+      request.params.organizationId ??
+      request.query.organizationId ??
+      (request.body as { organizationId?: unknown } | undefined)?.organizationId;
+    return typeof candidate === 'string' ? candidate : undefined;
+  }
+  private requestResourceId(request: KnowledgeRequest): string | undefined {
+    const body = request.body as
+      | { id?: unknown; knowledgeBaseId?: unknown }
+      | undefined;
+    const candidate =
+      request.params.id ??
+      request.params.knowledgeBaseId ??
+      body?.id ??
+      body?.knowledgeBaseId;
+    return typeof candidate === 'string' ? candidate : undefined;
   }
 }

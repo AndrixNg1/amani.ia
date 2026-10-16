@@ -47,6 +47,41 @@ export function knowledgeConfig(source: EnvironmentSource = process.env) {
       'invalid_environment',
     );
   }
+  const retrievalEmbeddingProvider = env.required(
+    'KNOWLEDGE_RETRIEVAL_EMBEDDING_PROVIDER',
+  );
+  if (
+    !['openai-compatible', 'deterministic-test'].includes(
+      retrievalEmbeddingProvider,
+    )
+  )
+    throw new ConfigurationError(
+      'KNOWLEDGE_RETRIEVAL_EMBEDDING_PROVIDER',
+      'invalid_string',
+    );
+  if (
+    retrievalEmbeddingProvider === 'deterministic-test' &&
+    !['development', 'test'].includes(environment)
+  )
+    throw new ConfigurationError(
+      'KNOWLEDGE_RETRIEVAL_EMBEDDING_PROVIDER',
+      'invalid_environment',
+    );
+  const retrievalDefaultTopK = env.integer(
+    'KNOWLEDGE_RETRIEVAL_DEFAULT_TOP_K',
+    { default: 6, min: 1, max: 50 },
+  );
+  const retrievalMaxTopK = env.integer('KNOWLEDGE_RETRIEVAL_MAX_TOP_K', {
+    default: 20,
+    min: 1,
+    max: 50,
+  });
+  if (retrievalDefaultTopK > retrievalMaxTopK) {
+    throw new ConfigurationError(
+      'KNOWLEDGE_RETRIEVAL_DEFAULT_TOP_K',
+      'invalid_integer',
+    );
+  }
   const serviceSecret =
     development === 'development'
       ? env.required('KNOWLEDGE_DEVELOPMENT_SERVICE_SECRET')
@@ -137,6 +172,51 @@ export function knowledgeConfig(source: EnvironmentSource = process.env) {
       redisPassword: env.required('KNOWLEDGE_PROCESSING_REDIS_PASSWORD'),
       prefix: env.required('KNOWLEDGE_PROCESSING_QUEUE_PREFIX'),
       name: 'document-processing',
+    },
+    retrieval: {
+      maxQueryCharacters: env.integer(
+        'KNOWLEDGE_RETRIEVAL_MAX_QUERY_CHARACTERS',
+        {
+          default: 2000,
+          min: 1,
+          max: 10000,
+        },
+      ),
+      defaultTopK: retrievalDefaultTopK,
+      maxTopK: retrievalMaxTopK,
+      minSimilarityBps: env.integer(
+        'KNOWLEDGE_RETRIEVAL_MIN_SIMILARITY_BPS',
+        {
+          default: 0,
+          min: 0,
+          max: 10000,
+        },
+      ),
+      embedding: {
+        provider: retrievalEmbeddingProvider as
+          | 'openai-compatible'
+          | 'deterministic-test',
+        model: env.required('KNOWLEDGE_RETRIEVAL_EMBEDDING_MODEL'),
+        dimension: env.integer('KNOWLEDGE_RETRIEVAL_EMBEDDING_DIMENSION', {
+          min: 1,
+          max: 4096,
+        }),
+        configVersion: env.integer(
+          'KNOWLEDGE_RETRIEVAL_EMBEDDING_CONFIG_VERSION',
+          { default: 1, min: 1, max: 1000 },
+        ),
+        timeoutMs: env.integer('KNOWLEDGE_RETRIEVAL_EMBEDDING_TIMEOUT_MS', {
+          default: 10000,
+          min: 100,
+          max: 60000,
+        }),
+        ...(retrievalEmbeddingProvider === 'openai-compatible'
+          ? {
+              baseUrl: env.url('KNOWLEDGE_RETRIEVAL_EMBEDDING_BASE_URL'),
+              apiKey: env.required('KNOWLEDGE_RETRIEVAL_EMBEDDING_API_KEY'),
+            }
+          : {}),
+      },
     },
   };
 }
