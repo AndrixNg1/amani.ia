@@ -1,6 +1,6 @@
 # Architecture diagrams
 
-This directory contains the visual architecture catalog for **Amani IA**. All 19 numbered diagrams (00–18) describe the **target architecture**, not completed features. The three Mermaid diagrams at the end separately document the initialized repository, planned backend integration, and required authorization flow.
+This directory contains the visual architecture catalog for **Amani IA**. The PNG catalog describes the **target architecture**; editable Mermaid sources document the implemented Knowledge source foundation and document-processing flow.
 
 > **Implementation status:** The Next.js and NestJS applications are initialized, and local infrastructure configuration is prepared. Authentication, service-to-service clients, policy enforcement, persistent business data, queues, and AI/RAG integrations remain planned until implemented and verified.
 
@@ -95,7 +95,8 @@ flowchart TB
         redis["Redis :6379"]
         minio["MinIO API :9000 / console :9001"]
     end
-    placeholders["Documentation placeholders: packages / workers / root tests"]
+    worker["document-processing worker"]
+    placeholders["Reserved: Python Data Engine / root integration tests"]
 ```
 
 ## Intended backend architecture
@@ -111,8 +112,9 @@ flowchart LR
     plugins -. "Membership and permission verification" .-> core
     plugins -. "Tenant-scoped data access" .-> storage["PostgreSQL / pgvector / MinIO"]
     plugins -. "Scoped background jobs and cache" .-> redis["Redis"]
-    redis -. "Jobs with verified scope" .-> workers["Planned workers"]
-    workers -. "Authorized, tenant-scoped processing" .-> storage
+    redis --> worker["Document processing worker"]
+    worker -->|"Revalidated, bounded processing"| knowledge
+    knowledge -->|"Owned chunks and embeddings"| storage
 ```
 
 Storage ownership, transport credentials, permission lookup protocols, and job processing are not yet implemented. The diagram groups the five Plugin APIs for readability; it does not combine them into a single service.
@@ -157,3 +159,12 @@ external connectors and all structured Analytics flows remain future work. The o
 PNG ingestion illustration has not been regenerated. No renderer command is configured
 in this repository; render these sources with a reviewed Mermaid tool when exporting.
 No PNG or runtime validation was generated/executed for this change.
+
+## Document processing worker (16 October 2026)
+
+[Document processing](20-document-processing.mmd) is the editable source for the
+asynchronous boundary: Knowledge creates the versioned ingestion intent, BullMQ
+transports it, and the worker returns bounded results through Knowledge. Knowledge
+revalidates state and access before issuing short-lived object access and before
+publication. The flow ends at a `ready` processed document; secure retrieval is phase 7.
+No renderer command is configured, so no PNG was generated.

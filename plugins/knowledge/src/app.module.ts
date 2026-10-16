@@ -17,6 +17,9 @@ import { DocumentsController } from './documents/documents.controller';
 import { UploadsController } from './uploads/uploads.controller';
 import { AccessController } from './authorization/access.controller';
 import { HealthController } from './health/health.controller';
+import { DocumentProcessingQueue } from './processing/document-processing.queue';
+import { DocumentProcessingService } from './processing/document-processing.service';
+import { DocumentProcessingController } from './processing/document-processing.controller';
 
 @Module({
   imports: [DatabaseModule, StorageModule],
@@ -27,6 +30,7 @@ import { HealthController } from './health/health.controller';
     DocumentsController,
     UploadsController,
     AccessController,
+    DocumentProcessingController,
   ],
   providers: [
     CorePolicyClient,
@@ -36,6 +40,8 @@ import { HealthController } from './health/health.controller';
     SourcesService,
     DocumentsService,
     UploadsService,
+    DocumentProcessingQueue,
+    DocumentProcessingService,
     { provide: IdentityVerifier, useFactory: () => identityVerifier() },
     { provide: APP_GUARD, useClass: TrustedIdentityGuard },
   ],

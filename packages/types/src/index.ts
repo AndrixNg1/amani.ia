@@ -25,6 +25,7 @@ export type ServiceName =
   | '@amani/gateway'
   | '@amani/core-api'
   | '@amani/ai-orchestrator'
+  | '@amani/document-processing'
   | `@amani/${PluginName}`;
 
 /** UTC ISO 8601 text, e.g. 2026-09-28T08:00:00.000Z; validated by consumers. */

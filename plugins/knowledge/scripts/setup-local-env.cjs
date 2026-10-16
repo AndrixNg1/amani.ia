@@ -29,10 +29,15 @@ try {
     KNOWLEDGE_STORAGE_SECRET_KEY: root.MINIO_ROOT_PASSWORD,
     KNOWLEDGE_STORAGE_FORCE_PATH_STYLE: 'true',
     KNOWLEDGE_UPLOAD_URL_SECONDS: '300',
+    KNOWLEDGE_DOWNLOAD_URL_SECONDS: '120',
     KNOWLEDGE_MAX_UPLOAD_BYTES: '52428800',
     KNOWLEDGE_ALLOWED_MIME_TYPES:
       'application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown',
     KNOWLEDGE_SERVICE_AUTH_MODE: 'disabled',
+    KNOWLEDGE_PROCESSING_REDIS_HOST: root.REDIS_HOST || '127.0.0.1',
+    KNOWLEDGE_PROCESSING_REDIS_PORT: root.REDIS_PORT || '6379',
+    KNOWLEDGE_PROCESSING_REDIS_PASSWORD: root.REDIS_PASSWORD,
+    KNOWLEDGE_PROCESSING_QUEUE_PREFIX: 'amani:development:knowledge',
   };
   const target = resolve(__dirname, '../.env');
   const existing = existsSync(target)

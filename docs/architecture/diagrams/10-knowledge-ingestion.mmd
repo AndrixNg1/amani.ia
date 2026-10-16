@@ -8,5 +8,11 @@ flowchart TD
   Verify --> Version[Finalize document version]
   Doc --> Version
   Version --> Job[Transactional ingestion request V1]
-  Job -.-> Worker[Document worker - future]
-  Worker -.-> Index[Chunks embeddings retrieval - future]
+  Job --> Queue[Redis BullMQ document-processing]
+  Queue --> Worker[Document processing worker]
+  Worker --> Claim[Knowledge claim and current policy check]
+  Claim --> Download[Short-lived pinned object download]
+  Download --> Extract[Extract normalize chunk embed]
+  Extract --> Index[Knowledge chunks and pgvector embeddings]
+  Index --> Ready[Version ready]
+  Ready -. phase 7 .-> Retrieval[Secure retrieval - future]
