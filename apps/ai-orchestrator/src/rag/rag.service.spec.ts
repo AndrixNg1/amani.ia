@@ -7,7 +7,6 @@ import type { Actor } from '../common/context';
 import type { CorePolicyClient } from '../clients/core-policy.client';
 import type { KnowledgeRetrievalClient } from '../clients/knowledge-retrieval.client';
 import type {
-  GenerationProvider,
   GenerationRequest,
   GenerationResponse,
 } from '../generation/generation.provider';
