@@ -52,7 +52,7 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
           ? this.documentProcessingSecret
           : p.callingService === '@amani/ai-orchestrator'
             ? this.orchestratorSecret
-          : undefined;
+            : undefined;
     if (!secret) return null;
     const expected = createHmac('sha256', Buffer.from(secret, 'hex'))
       .update(encoded)
@@ -65,9 +65,7 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
         '@amani/gateway',
         '@amani/document-processing',
         '@amani/ai-orchestrator',
-      ].includes(
-        p.callingService ?? '',
-      ) ||
+      ].includes(p.callingService ?? '') ||
       p.audience !== '@amani/knowledge' ||
       !isUUID(p.userId) ||
       (p.organizationId !== undefined && !isUUID(p.organizationId)) ||
@@ -163,7 +161,8 @@ export function identityVerifier(
     orchestratorSecret !== undefined &&
     (!/^[a-f0-9]{64}$/.test(orchestratorSecret) ||
       orchestratorSecret === secret ||
-      orchestratorSecret === source.KNOWLEDGE_DOCUMENT_PROCESSING_DEVELOPMENT_SECRET)
+      orchestratorSecret ===
+        source.KNOWLEDGE_DOCUMENT_PROCESSING_DEVELOPMENT_SECRET)
   )
     throw new ConfigurationError(
       'KNOWLEDGE_ORCHESTRATOR_DEVELOPMENT_SECRET',

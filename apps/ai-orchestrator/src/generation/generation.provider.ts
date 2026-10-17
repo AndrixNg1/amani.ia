@@ -52,16 +52,16 @@ function structuredOutput(value: unknown): {
 export class DeterministicGenerationProvider extends GenerationProvider {
   private readonly config = orchestratorConfig();
 
-  async generate(request: GenerationRequest): Promise<GenerationResponse> {
+  generate(request: GenerationRequest): Promise<GenerationResponse> {
     const evidenceId = request.evidenceIds[0];
     if (!evidenceId) throw new BadGatewayException();
-    return {
-      answer: `Amani found authorized evidence relevant to your question.`,
+    return Promise.resolve({
+      answer: 'Amani found authorized evidence relevant to your question.',
       evidenceIds: [evidenceId],
       provider: 'deterministic-test',
       model: this.config.generation.model,
       finishReason: 'stop',
-    };
+    });
   }
 }
 
@@ -102,7 +102,10 @@ export class OpenAiCompatibleGenerationProvider extends GenerationProvider {
       if (!response.ok) throw new ServiceUnavailableException();
       const payload: unknown = await response.json();
       const root = payload as {
-        choices?: readonly { message?: { content?: unknown }; finish_reason?: unknown }[];
+        choices?: readonly {
+          message?: { content?: unknown };
+          finish_reason?: unknown;
+        }[];
         usage?: { prompt_tokens?: unknown; completion_tokens?: unknown };
       };
       const choice = root.choices?.[0];
@@ -121,7 +124,9 @@ export class OpenAiCompatibleGenerationProvider extends GenerationProvider {
         provider: 'openai-compatible',
         model: generation.model,
         finishReason:
-          typeof choice.finish_reason === 'string' ? choice.finish_reason : null,
+          typeof choice.finish_reason === 'string'
+            ? choice.finish_reason
+            : null,
         ...(typeof root.usage?.prompt_tokens === 'number'
           ? { inputTokens: root.usage.prompt_tokens }
           : {}),
@@ -151,6 +156,7 @@ export class ConfiguredGenerationProvider extends GenerationProvider {
   private readonly delegate: GenerationProvider;
 
   constructor() {
+    super();
     this.delegate =
       orchestratorConfig().generation.provider === 'deterministic-test'
         ? new DeterministicGenerationProvider()

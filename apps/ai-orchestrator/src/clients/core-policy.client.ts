@@ -19,9 +19,13 @@ function isDecision(value: unknown): value is CoreAuthorizationDecision {
     isUUID(decision.organizationId) &&
     isUUID(decision.userId) &&
     typeof decision.permission === 'string' &&
-    ['ROLE_PERMISSION', 'INACTIVE_CONTEXT', 'MISSING_PERMISSION', 'PLUGIN_UNAVAILABLE', 'WRONG_ORGANIZATION'].includes(
-      decision.reason as string,
-    )
+    [
+      'ROLE_PERMISSION',
+      'INACTIVE_CONTEXT',
+      'MISSING_PERMISSION',
+      'PLUGIN_UNAVAILABLE',
+      'WRONG_ORGANIZATION',
+    ].includes(decision.reason as string)
   );
 }
 

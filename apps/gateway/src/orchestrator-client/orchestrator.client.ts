@@ -14,7 +14,6 @@ import type {
 } from '@amani/contracts';
 import { GATEWAY_CONFIG } from '../config/gateway.config';
 import type { GatewayConfig } from '../config/gateway.config';
-import { principalOf } from '../common/context';
 import type { RequestContext } from '../common/context';
 import { SafeLogger } from '../common/logging';
 import { ServiceAuthentication } from '../core-client/service-authentication';
@@ -35,7 +34,8 @@ function citation(value: unknown): value is KnowledgeRagCitationV1 {
     ].every((key) => typeof item[key] === 'string') &&
     typeof item.chunkIndex === 'number' &&
     (typeof item.pageNumber === 'number' || item.pageNumber === null) &&
-    (typeof item.sectionReference === 'string' || item.sectionReference === null)
+    (typeof item.sectionReference === 'string' ||
+      item.sectionReference === null)
   );
 }
 
@@ -73,7 +73,8 @@ function isGeneration(value: unknown): boolean {
     typeof item.model === 'string' &&
     item.promptProfile === 'knowledge-rag-v1' &&
     (typeof item.finishReason === 'string' || item.finishReason === null) &&
-    (item.inputTokens === undefined || isNonNegativeInteger(item.inputTokens)) &&
+    (item.inputTokens === undefined ||
+      isNonNegativeInteger(item.inputTokens)) &&
     (item.outputTokens === undefined || isNonNegativeInteger(item.outputTokens))
   );
 }
@@ -138,7 +139,10 @@ export class OrchestratorClient {
             method: 'POST',
             path,
             body,
-            scope: { action: 'ai.knowledge-rag.ask', resourceType: 'knowledge' },
+            scope: {
+              action: 'ai.knowledge-rag.ask',
+              resourceType: 'knowledge',
+            },
           }),
         },
         body,
@@ -148,7 +152,10 @@ export class OrchestratorClient {
       if (response.status === 403) throw new ForbiddenException();
       if (!response.ok) throw new ServiceUnavailableException();
       const text = await response.text();
-      if (Buffer.byteLength(text, 'utf8') > this.config.orchestratorMaxResponseBytes) {
+      if (
+        Buffer.byteLength(text, 'utf8') >
+        this.config.orchestratorMaxResponseBytes
+      ) {
         throw new BadGatewayException();
       }
       let parsed: unknown;

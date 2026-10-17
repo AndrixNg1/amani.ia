@@ -74,9 +74,7 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
     const now = Date.now();
     if (
       p.version !== 1 ||
-      (!knowledge &&
-        !orchestrator &&
-        p.callingService !== '@amani/gateway') ||
+      (!knowledge && !orchestrator && p.callingService !== '@amani/gateway') ||
       p.audience !== '@amani/core-api' ||
       !isUUID(p.userId) ||
       (p.organizationId !== undefined && !isUUID(p.organizationId)) ||

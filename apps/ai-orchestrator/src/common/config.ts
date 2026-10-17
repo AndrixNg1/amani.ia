@@ -74,7 +74,9 @@ export function orchestratorConfig(source: EnvironmentSource = process.env) {
   }
   const generationProvider =
     source.ORCHESTRATOR_GENERATION_PROVIDER ?? 'deterministic-test';
-  if (!['openai-compatible', 'deterministic-test'].includes(generationProvider)) {
+  if (
+    !['openai-compatible', 'deterministic-test'].includes(generationProvider)
+  ) {
     throw new ConfigurationError(
       'ORCHESTRATOR_GENERATION_PROVIDER',
       'invalid_string',
@@ -100,13 +102,19 @@ export function orchestratorConfig(source: EnvironmentSource = process.env) {
     max: 20,
   });
   if (defaultTopK > maxTopK) {
-    throw new ConfigurationError('ORCHESTRATOR_RAG_DEFAULT_TOP_K', 'out_of_range');
+    throw new ConfigurationError(
+      'ORCHESTRATOR_RAG_DEFAULT_TOP_K',
+      'out_of_range',
+    );
   }
-  const maxEvidenceChunks = env.integer('ORCHESTRATOR_RAG_MAX_EVIDENCE_CHUNKS', {
-    default: 6,
-    min: 1,
-    max: 20,
-  });
+  const maxEvidenceChunks = env.integer(
+    'ORCHESTRATOR_RAG_MAX_EVIDENCE_CHUNKS',
+    {
+      default: 6,
+      min: 1,
+      max: 20,
+    },
+  );
   if (maxEvidenceChunks > maxTopK) {
     throw new ConfigurationError(
       'ORCHESTRATOR_RAG_MAX_EVIDENCE_CHUNKS',
@@ -145,7 +153,12 @@ export function orchestratorConfig(source: EnvironmentSource = process.env) {
     gatewaySecret,
     coreSecret,
     knowledgeSecret,
-    coreUrl: serviceUrl(env, 'CORE_API_URL', 'http://127.0.0.1:4001', production),
+    coreUrl: serviceUrl(
+      env,
+      'CORE_API_URL',
+      'http://127.0.0.1:4001',
+      production,
+    ),
     knowledgeUrl: serviceUrl(
       env,
       'KNOWLEDGE_API_URL',
@@ -177,7 +190,8 @@ export function orchestratorConfig(source: EnvironmentSource = process.env) {
       ),
     },
     generation: {
-      provider: generationProvider as 'openai-compatible' | 'deterministic-test',
+      provider: generationProvider as
+        'openai-compatible' | 'deterministic-test',
       model:
         generationProvider === 'deterministic-test'
           ? (source.ORCHESTRATOR_GENERATION_MODEL ?? 'deterministic-v1')
@@ -187,11 +201,14 @@ export function orchestratorConfig(source: EnvironmentSource = process.env) {
         min: 100,
         max: 120000,
       }),
-      maxOutputTokens: env.integer('ORCHESTRATOR_GENERATION_MAX_OUTPUT_TOKENS', {
-        default: 700,
-        min: 32,
-        max: 4000,
-      }),
+      maxOutputTokens: env.integer(
+        'ORCHESTRATOR_GENERATION_MAX_OUTPUT_TOKENS',
+        {
+          default: 700,
+          min: 32,
+          max: 4000,
+        },
+      ),
       temperatureBps: env.integer('ORCHESTRATOR_GENERATION_TEMPERATURE_BPS', {
         default: 1000,
         min: 0,

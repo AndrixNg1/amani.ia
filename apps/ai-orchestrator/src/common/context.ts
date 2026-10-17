@@ -69,12 +69,12 @@ export class TrustedIdentityGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    if (this.reflector.get<boolean>('orchestrator.public', context.getHandler())) {
+    if (
+      this.reflector.get<boolean>('orchestrator.public', context.getHandler())
+    ) {
       return true;
     }
-    const request = context
-      .switchToHttp()
-      .getRequest<OrchestratorRequest>();
+    const request = context.switchToHttp().getRequest<OrchestratorRequest>();
     const operation = this.reflector.get<{
       action: string;
       resourceType: string;

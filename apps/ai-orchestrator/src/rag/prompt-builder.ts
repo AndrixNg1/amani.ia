@@ -13,19 +13,18 @@ export interface KnowledgeRagPrompt {
 export class KnowledgeRagPromptBuilder {
   build(question: string, evidence: readonly Evidence[]): KnowledgeRagPrompt {
     const serializedEvidence = evidence
-      .map(
-        ({ evidenceId, result }) =>
-          [
-            `<EVIDENCE id="${evidenceId}">`,
-            JSON.stringify({
-              text: result.content,
-              documentTitle: result.documentTitle,
-              sectionReference: result.sectionReference,
-              pageNumber: result.pageNumber,
-            }),
-            '</EVIDENCE>',
-          ].join('\n'),
-        )
+      .map(({ evidenceId, result }) =>
+        [
+          `<EVIDENCE id="${evidenceId}">`,
+          JSON.stringify({
+            text: result.content,
+            documentTitle: result.documentTitle,
+            sectionReference: result.sectionReference,
+            pageNumber: result.pageNumber,
+          }),
+          '</EVIDENCE>',
+        ].join('\n'),
+      )
       .join('\n\n');
     return {
       profile: KNOWLEDGE_RAG_PROMPT_PROFILE,

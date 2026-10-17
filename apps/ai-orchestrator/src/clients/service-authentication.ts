@@ -1,6 +1,9 @@
 import { createHash, createHmac, randomUUID } from 'node:crypto';
 import { ServiceUnavailableException } from '@nestjs/common';
-import type { AuthorizationScope, DevelopmentDelegation } from '@amani/contracts';
+import type {
+  AuthorizationScope,
+  DevelopmentDelegation,
+} from '@amani/contracts';
 import type { Actor } from '../common/context';
 
 export interface SignedCall {

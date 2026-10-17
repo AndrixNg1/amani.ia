@@ -51,7 +51,10 @@ type KnowledgeMock = {
   >;
 };
 type GenerationMock = {
-  readonly generate: jest.Mock<Promise<GenerationResponse>, [GenerationRequest]>;
+  readonly generate: jest.Mock<
+    Promise<GenerationResponse>,
+    [GenerationRequest]
+  >;
 };
 const allowed: CoreAuthorizationDecision = {
   allowed: true,
@@ -98,9 +101,10 @@ const retrieval = (content: string): KnowledgeRetrievalResponseV1 => ({
 
 function serviceWith(response: KnowledgeRetrievalResponseV1) {
   const core: CoreMock = {
-    assertKnowledgeCapability: jest.fn<Promise<CoreAuthorizationDecision>, [Actor]>(
-      () => Promise.resolve(allowed),
-    ),
+    assertKnowledgeCapability: jest.fn<
+      Promise<CoreAuthorizationDecision>,
+      [Actor]
+    >(() => Promise.resolve(allowed)),
   };
   const knowledge: KnowledgeMock = {
     retrieve: jest.fn<
@@ -124,7 +128,7 @@ function serviceWith(response: KnowledgeRetrievalResponseV1) {
       core as unknown as CorePolicyClient,
       knowledge as unknown as KnowledgeRetrievalClient,
       new KnowledgeRagPromptBuilder(),
-      generation as unknown as GenerationProvider,
+      generation,
     ),
     core,
     knowledge,
@@ -183,8 +187,12 @@ describe('KnowledgeRagService', () => {
   });
 
   it('propagates a Knowledge failure without generation fallback', async () => {
-    const { service, knowledge, generation } = serviceWith(retrieval('visible'));
-    knowledge.retrieve.mockRejectedValueOnce(new Error('knowledge unavailable'));
+    const { service, knowledge, generation } = serviceWith(
+      retrieval('visible'),
+    );
+    knowledge.retrieve.mockRejectedValueOnce(
+      new Error('knowledge unavailable'),
+    );
     await expect(service.answer(actor, request)).rejects.toThrow(
       'knowledge unavailable',
     );

@@ -48,7 +48,9 @@ export function gatewayConfig(source: EnvironmentSource = process.env) {
   }
   const orchestratorUrl = new URL(
     env.url('ORCHESTRATOR_API_BASE_URL', {
-      default: 'http://127.0.0.1:4002',
+      default: production
+        ? 'https://ai-orchestrator.example.invalid'
+        : 'http://127.0.0.1:4002',
     }),
   );
   if (

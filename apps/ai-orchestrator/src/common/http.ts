@@ -36,8 +36,7 @@ export class SafeExceptionFilter implements ExceptionFilter {
               typeof createRequestId
             >)
           : createRequestId(),
-        correlationId:
-          request.correlationId ?? resolveCorrelationId(undefined),
+        correlationId: request.correlationId ?? resolveCorrelationId(undefined),
         timestamp: new Date().toISOString(),
         apiVersion: '1',
       },

@@ -24,7 +24,7 @@ export function buildEvidenceContext(
   let characters = 0;
   let omittedCount = 0;
   for (const result of results) {
-    const duplicateKey = `${result.chunkId}:${result.contentChecksum}`;
+    const duplicateKey = result.contentChecksum;
     if (seen.has(duplicateKey)) {
       omittedCount += 1;
       continue;

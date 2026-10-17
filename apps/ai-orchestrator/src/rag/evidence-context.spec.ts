@@ -30,7 +30,10 @@ describe('buildEvidenceContext', () => {
       [result('101', 'first'), result('102', 'second')],
       { maxChunks: 2, maxCharacters: 100 },
     );
-    expect(context.evidence.map((item) => item.evidenceId)).toEqual(['E1', 'E2']);
+    expect(context.evidence.map((item) => item.evidenceId)).toEqual([
+      'E1',
+      'E2',
+    ]);
   });
 
   it('does not split an oversized chunk or exceed the character budget', () => {
@@ -38,7 +41,9 @@ describe('buildEvidenceContext', () => {
       [result('101', 'too long'), result('102', 'safe')],
       { maxChunks: 2, maxCharacters: 5 },
     );
-    expect(context.evidence.map((item) => item.result.content)).toEqual(['safe']);
+    expect(context.evidence.map((item) => item.result.content)).toEqual([
+      'safe',
+    ]);
     expect(context.characterCount).toBe(4);
   });
 

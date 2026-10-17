@@ -111,11 +111,7 @@ export class CoreClient {
       userId,
     );
   }
-  async check(
-    ctx: RequestContext,
-    permission: string,
-    pluginKey?: PluginName,
-  ) {
+  async check(ctx: RequestContext, permission: string, pluginKey?: PluginName) {
     const org = this.org(ctx);
     return response.decision(
       await this.send(

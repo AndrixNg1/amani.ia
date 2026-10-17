@@ -45,7 +45,30 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
     }
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
     const delegation = raw as Partial<DevelopmentDelegation>;
-    const expected = createHmac('sha256', Buffer.from(this.gatewaySecret, 'hex'))
+    const userId = delegation.userId;
+    const organizationId = delegation.organizationId;
+    const requestId = delegation.requestId;
+    const correlationId = delegation.correlationId;
+    const issuedAt = delegation.issuedAt;
+    const expiresAt = delegation.expiresAt;
+    const nonce = delegation.nonce;
+    const scope = delegation.scope;
+    if (
+      userId === undefined ||
+      organizationId === undefined ||
+      requestId === undefined ||
+      correlationId === undefined ||
+      issuedAt === undefined ||
+      expiresAt === undefined ||
+      nonce === undefined ||
+      !scope
+    ) {
+      return null;
+    }
+    const expected = createHmac(
+      'sha256',
+      Buffer.from(this.gatewaySecret, 'hex'),
+    )
       .update(encoded)
       .digest();
     if (!timingSafeEqual(expected, Buffer.from(signature, 'hex'))) return null;
@@ -54,26 +77,26 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
       delegation.version !== 1 ||
       delegation.callingService !== '@amani/gateway' ||
       delegation.audience !== '@amani/ai-orchestrator' ||
-      !isUUID(delegation.userId) ||
-      !isUUID(delegation.organizationId) ||
-      !isRequestId(delegation.requestId) ||
-      !isCorrelationId(delegation.correlationId) ||
-      delegation.requestId !== request.headers['x-request-id'] ||
-      delegation.correlationId !== request.headers['x-correlation-id'] ||
-      !Number.isSafeInteger(delegation.issuedAt) ||
-      !Number.isSafeInteger(delegation.expiresAt) ||
-      delegation.expiresAt <= now ||
-      delegation.issuedAt > now + 1000 ||
-      delegation.expiresAt <= delegation.issuedAt ||
-      delegation.expiresAt - delegation.issuedAt > 30000 ||
-      !isUUID(delegation.nonce) ||
+      !isUUID(userId) ||
+      !isUUID(organizationId) ||
+      !isRequestId(requestId) ||
+      !isCorrelationId(correlationId) ||
+      requestId !== request.headers['x-request-id'] ||
+      correlationId !== request.headers['x-correlation-id'] ||
+      !Number.isSafeInteger(issuedAt) ||
+      !Number.isSafeInteger(expiresAt) ||
+      expiresAt <= now ||
+      issuedAt > now + 1000 ||
+      expiresAt <= issuedAt ||
+      expiresAt - issuedAt > 30000 ||
+      !isUUID(nonce) ||
       delegation.method !== 'POST' ||
       delegation.method !== request.method ||
       delegation.path !== request.originalUrl ||
       delegation.path !== '/ai/knowledge-rag' ||
-      delegation.scope?.action !== 'ai.knowledge-rag.ask' ||
-      delegation.scope.resourceType !== 'knowledge' ||
-      delegation.scope.resourceId !== undefined ||
+      scope.action !== 'ai.knowledge-rag.ask' ||
+      scope.resourceType !== 'knowledge' ||
+      scope.resourceId !== undefined ||
       delegation.bodySha256 !==
         createHash('sha256')
           .update(request.rawBody ?? '')
@@ -84,15 +107,15 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
     for (const [nonce, expiry] of this.seen) {
       if (expiry <= now) this.seen.delete(nonce);
     }
-    if (this.seen.has(delegation.nonce) || this.seen.size >= 10000) return null;
-    this.seen.set(delegation.nonce, delegation.expiresAt);
+    if (this.seen.has(nonce) || this.seen.size >= 10000) return null;
+    this.seen.set(nonce, expiresAt);
     return {
-      userId: delegation.userId,
-      organizationId: delegation.organizationId,
+      userId,
+      organizationId,
       callingService: delegation.callingService,
       audience: delegation.audience,
-      scope: delegation.scope,
-      expiresAt: new Date(delegation.expiresAt).toISOString(),
+      scope,
+      expiresAt: new Date(expiresAt).toISOString(),
     };
   }
 }

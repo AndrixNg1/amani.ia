@@ -103,7 +103,9 @@ export class KnowledgeRagService {
     evidence: readonly Evidence[],
     selectedIds: readonly string[],
   ): readonly KnowledgeRagCitationV1[] {
-    const byId = new Map(evidence.map((item) => [item.evidenceId, item.result]));
+    const byId = new Map(
+      evidence.map((item) => [item.evidenceId, item.result]),
+    );
     return [...new Set(selectedIds)].flatMap((evidenceId) => {
       const result = byId.get(evidenceId);
       if (!result) return [];
