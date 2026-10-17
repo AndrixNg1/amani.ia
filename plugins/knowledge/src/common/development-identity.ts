@@ -15,6 +15,7 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
   constructor(
     private readonly gatewaySecret: string,
     private readonly documentProcessingSecret: string,
+    private readonly orchestratorSecret?: string,
   ) {
     super();
   }
@@ -49,6 +50,8 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
         ? this.gatewaySecret
         : p.callingService === '@amani/document-processing'
           ? this.documentProcessingSecret
+          : p.callingService === '@amani/ai-orchestrator'
+            ? this.orchestratorSecret
           : undefined;
     if (!secret) return null;
     const expected = createHmac('sha256', Buffer.from(secret, 'hex'))
@@ -58,7 +61,11 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
     const now = Date.now();
     if (
       p.version !== 1 ||
-      !['@amani/gateway', '@amani/document-processing'].includes(
+      ![
+        '@amani/gateway',
+        '@amani/document-processing',
+        '@amani/ai-orchestrator',
+      ].includes(
         p.callingService ?? '',
       ) ||
       p.audience !== '@amani/knowledge' ||
@@ -101,7 +108,16 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
     const callingService = p.callingService;
     if (
       callingService !== '@amani/gateway' &&
-      callingService !== '@amani/document-processing'
+      callingService !== '@amani/document-processing' &&
+      callingService !== '@amani/ai-orchestrator'
+    )
+      return null;
+    if (
+      callingService === '@amani/ai-orchestrator' &&
+      (p.path !== '/knowledge/retrieval' ||
+        p.method !== 'POST' ||
+        p.scope.action !== 'knowledge.documents.read' ||
+        p.scope.resourceType !== 'knowledge_base')
     )
       return null;
     return {
@@ -142,8 +158,20 @@ export function identityVerifier(
       'KNOWLEDGE_DEVELOPMENT_SERVICE_SECRET',
       'invalid_string',
     );
+  const orchestratorSecret = source.KNOWLEDGE_ORCHESTRATOR_DEVELOPMENT_SECRET;
+  if (
+    orchestratorSecret !== undefined &&
+    (!/^[a-f0-9]{64}$/.test(orchestratorSecret) ||
+      orchestratorSecret === secret ||
+      orchestratorSecret === source.KNOWLEDGE_DOCUMENT_PROCESSING_DEVELOPMENT_SECRET)
+  )
+    throw new ConfigurationError(
+      'KNOWLEDGE_ORCHESTRATOR_DEVELOPMENT_SECRET',
+      'invalid_string',
+    );
   return new DevelopmentIdentityVerifier(
     secret,
     env.required('KNOWLEDGE_DOCUMENT_PROCESSING_DEVELOPMENT_SECRET'),
+    orchestratorSecret,
   );
 }

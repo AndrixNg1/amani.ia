@@ -142,7 +142,12 @@ distinct `KNOWLEDGE_CORE_DEVELOPMENT_SECRET`. Knowledge needs
 server-only, 64-character lowercase hexadecimal strings; production identity remains an
 open architecture decision.
 
-## Tests and next phase
+AI Orchestrator has a distinct `KNOWLEDGE_ORCHESTRATOR_DEVELOPMENT_SECRET`. The Knowledge
+verifier accepts that identity only for `POST /knowledge/retrieval` and the
+`knowledge.documents.read`/`knowledge_base` scope. Its signed delegation preserves the
+requester user and organization; it never grants the Orchestrator access to all documents.
+
+## Tests and verification
 
 Retrieval unit tests use synthetic vectors and mocked Core/database/provider boundaries.
 They cover Core-before-query behavior, candidate SQL scope, provenance mapping and
@@ -151,5 +156,5 @@ Knowledge Base scope before the retrieval service is invoked. Database integrati
 validation must cover tenant and grant isolation, ready/current lifecycle, profile
 compatibility, ranking and top-K. Tests are **NOT RUN BY REQUEST**.
 
-Phase 8 may add an AI Orchestrator that consumes this endpoint. It must not introduce a
-second retrieval engine or bypass this authorization boundary.
+AI Orchestrator consumes this endpoint. It does not introduce a second retrieval engine
+or bypass this authorization boundary.
