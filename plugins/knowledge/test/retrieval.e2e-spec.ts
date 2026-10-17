@@ -80,7 +80,9 @@ describe('Knowledge retrieval HTTP boundary (e2e)', () => {
         topK: 3,
       })
       .expect(201);
-    expect(response.body.type).toBe('knowledge.retrieval.results');
+    expect(response.body).toMatchObject({
+      type: 'knowledge.retrieval.results',
+    });
     expect(retrieve).toHaveBeenCalledWith(
       expect.objectContaining({ organizationId, requestId, correlationId }),
       expect.objectContaining({ organizationId, knowledgeBaseId, topK: 3 }),
