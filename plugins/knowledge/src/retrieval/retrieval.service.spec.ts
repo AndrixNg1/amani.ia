@@ -1,4 +1,7 @@
-import type { KnowledgeAuthorizationResponse } from '@amani/contracts';
+import type {
+  KnowledgeAuthorizationResponse,
+  KnowledgeRetrievalResponseV1,
+} from '@amani/contracts';
 import type { SQL } from 'drizzle-orm';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import type {
@@ -136,11 +139,14 @@ describe('secure Knowledge retrieval', () => {
         similarity_score: 0.92,
       },
     ]);
-    const response = await service.retrieve(actor, {
-      organizationId: organizationA,
-      query: 'compensation reviews',
-      topK: 2,
-    });
+    const response: KnowledgeRetrievalResponseV1 = await service.retrieve(
+      actor,
+      {
+        organizationId: organizationA,
+        query: 'compensation reviews',
+        topK: 2,
+      },
+    );
     expect(response.results[0]).toMatchObject({
       organizationId: organizationA,
       documentVersionId: '00000000-0000-4000-8000-000000000105',
