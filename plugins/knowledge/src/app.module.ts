@@ -20,6 +20,9 @@ import { HealthController } from './health/health.controller';
 import { DocumentProcessingQueue } from './processing/document-processing.queue';
 import { DocumentProcessingService } from './processing/document-processing.service';
 import { DocumentProcessingController } from './processing/document-processing.controller';
+import { RetrievalService } from './retrieval/retrieval.service';
+import { RetrievalController } from './retrieval/retrieval.controller';
+import { RetrievalEmbeddingProvider } from './retrieval/retrieval.embedding';
 
 @Module({
   imports: [DatabaseModule, StorageModule],
@@ -31,6 +34,7 @@ import { DocumentProcessingController } from './processing/document-processing.c
     UploadsController,
     AccessController,
     DocumentProcessingController,
+    RetrievalController,
   ],
   providers: [
     CorePolicyClient,
@@ -42,6 +46,8 @@ import { DocumentProcessingController } from './processing/document-processing.c
     UploadsService,
     DocumentProcessingQueue,
     DocumentProcessingService,
+    RetrievalEmbeddingProvider,
+    RetrievalService,
     { provide: IdentityVerifier, useFactory: () => identityVerifier() },
     { provide: APP_GUARD, useClass: TrustedIdentityGuard },
   ],

@@ -10,7 +10,8 @@ Core Platform decides those. It does not own connector credentials or synchroniz
 the future Connectors plugin does. It does not own datasets, database queries or
 calculations: Data Analytics does. Knowledge owns document-processing state, chunks and
 embeddings; the separate worker performs bounded computation through internal APIs. It
-does not implement retrieval, RAG, question answering or LLM chat.
+implements secure evidence retrieval, but not RAG answer generation, question answering
+or LLM chat.
 
 ## Sources and ownership
 
@@ -64,8 +65,46 @@ same job ID and may re-enter `processing`; duplicate batches upsert the same chu
 After the final attempt, Knowledge records `failed` with a safe code. `ready` is only
 set after the expected number of chunks and embeddings exists in the Knowledge schema.
 The worker supports PDF text extraction, DOCX, UTF-8 TXT and Markdown. PDF without
-extractable text fails safely; OCR, external URL fetching, macro execution, retrieval
-and RAG are not implemented. See the worker README and ADR-0033/0034.
+extractable text fails safely; OCR, external URL fetching, macro execution, and RAG
+answer generation are not implemented. See the worker README and ADR-0033/0034.
+
+## Secure retrieval
+
+`POST /knowledge/retrieval` accepts `organizationId`, a non-empty `query`, optional
+`knowledgeBaseId`, bounded `topK`, and optional `minSimilarityBps` (0–10000). The
+identity context is authoritative: the body organization must match the verified
+organization and is never an authorization claim.
+
+The request flow is: verified identity → Core authorization (`knowledge.documents.read`,
+active membership, Knowledge installation and entitlement) → Knowledge resource grants
+→ compatible query embedding → PostgreSQL candidate query → ranked authorized evidence.
+Core failures fail closed. Knowledge uses the existing conservative inheritance model:
+an `inherit` document requires a read grant on its knowledge base; a `restricted`
+document additionally requires its own document read grant.
+
+The SQL query applies organization, active base/source/document, local grants, embedding
+provider/model/dimension/configuration version and lifecycle predicates before pgvector
+orders candidates. It uses cosine distance (`<=>`) and returns `1 - distance` as a
+similarity score; this is relevance only, never confidence. Only the latest version of a
+document participates, and only when that version is `ready`. Pending, processing,
+failed, archived and superseded content is excluded even when chunk rows remain.
+
+The response is `KnowledgeRetrievalResponseV1`. Each result includes the authorized
+chunk and a Knowledge-owned citation path: knowledge base, source, document, version and
+chunk IDs, plus title, page and section metadata when available. Citation IDs are not
+permanent access grants: any future source-opening operation must authorize again.
+
+The query embedding must match the persisted provider, model, dimension and configuration
+version exactly. The alpha uses exact filtered search because vectors have variable
+dimensions; no global ANN/HNSW index is safe yet. There is no retrieval-response cache.
+Queries, chunk content, vectors, signed URLs and provider credentials are not written to
+ordinary logs. The provider has bounded query length, top-K and timeout; failure is a
+controlled error and never falls back to unsecured keyword search.
+
+The future AI Orchestrator must call this API and must not query Knowledge PostgreSQL or
+ACL tables directly. It receives authorized evidence only. Hybrid search, reranking,
+answer generation, conversations, connectors and frontends remain out of scope. See
+ADR-0035 and `docs/architecture/diagrams/21-secure-knowledge-retrieval.mmd`.
 
 ## Environment and manual commands
 
@@ -87,4 +126,30 @@ npm run start:dev --workspace=@amani/knowledge
 ```
 
 The migration is checked in but has not been executed by this change. See ADR-0031 and
-ADR-0032 for enterprise-source boundaries and the ACL/upload decision.
+ADR-0032 for enterprise-source boundaries and the ACL/upload decision. Retrieval also
+requires the `KNOWLEDGE_RETRIEVAL_EMBEDDING_*` profile to match chunks written by the
+worker. Set the same provider/model/dimension/configuration version deliberately; never
+place an embedding API key in browser configuration.
+
+The generated local environment intentionally keeps service authentication disabled, so
+it cannot exercise retrieval. For a local retrieval test, enable development service
+authentication in the Core and Knowledge `.env` files. Core needs
+`CORE_SERVICE_AUTH_MODE=development`, its normal `DEVELOPMENT_SERVICE_SECRET`, and a
+distinct `KNOWLEDGE_CORE_DEVELOPMENT_SECRET`. Knowledge needs
+`KNOWLEDGE_SERVICE_AUTH_MODE=development`, a separate
+`KNOWLEDGE_DEVELOPMENT_SERVICE_SECRET` for the trusted caller, the same
+`KNOWLEDGE_CORE_DEVELOPMENT_SECRET`, and the document-processing secret. All values are
+server-only, 64-character lowercase hexadecimal strings; production identity remains an
+open architecture decision.
+
+## Tests and next phase
+
+Retrieval unit tests use synthetic vectors and mocked Core/database/provider boundaries.
+They cover Core-before-query behavior, candidate SQL scope, provenance mapping and
+controlled provider failures. HTTP tests cover verified organization and signed
+Knowledge Base scope before the retrieval service is invoked. Database integration
+validation must cover tenant and grant isolation, ready/current lifecycle, profile
+compatibility, ranking and top-K. Tests are **NOT RUN BY REQUEST**.
+
+Phase 8 may add an AI Orchestrator that consumes this endpoint. It must not introduce a
+second retrieval engine or bypass this authorization boundary.

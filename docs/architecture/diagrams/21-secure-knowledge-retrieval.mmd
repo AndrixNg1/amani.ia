@@ -1,0 +1,13 @@
+flowchart TD
+  Caller[User or future AI Orchestrator] --> API[Knowledge Retrieval API]
+  API --> Identity[Verified identity and organization]
+  Identity --> Core[Core: membership, permission, plugin policy]
+  Core --> Local[Knowledge base/document grant policy]
+  Local --> Scope[Authorized candidate SQL scope]
+  API --> Embed[Compatible query embedding]
+  Scope --> Search[PostgreSQL pgvector cosine search]
+  Embed --> Search
+  Search --> Ready[Active resources, current ready version only]
+  Ready --> Ranked[Ranked authorized chunks]
+  Ranked --> Citation[Knowledge-owned provenance and citation IDs]
+  Citation --> Evidence[Evidence only: no LLM answer generation]

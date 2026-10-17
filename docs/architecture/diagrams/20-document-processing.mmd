@@ -11,4 +11,4 @@ flowchart TD
   Embed --> Publish[Knowledge internal batch publication]
   Publish --> Store[(Knowledge PostgreSQL + pgvector)]
   Store --> Ready[Document Version: ready]
-  Ready -. "Phase 7 only" .-> Retrieval[Secure retrieval]
+  Ready --> Retrieval[Phase 7 secure retrieval]
