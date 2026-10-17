@@ -367,3 +367,12 @@ The local @amani/knowledge caller uses a separate KNOWLEDGE_CORE_DEVELOPMENT_SEC
 and is restricted to this single route/method/scope. Existing Gateway keys do not
 become Knowledge keys. Production authentication remains disabled/unselected.
 Tests for this extension are provided but NOT RUN BY REQUEST.
+
+## AI Orchestrator policy caller
+
+The local AI Orchestrator uses the existing `POST /internal/authorization/check` route
+only for `plugins.use` on the `knowledge` plugin. Its
+`ORCHESTRATOR_CORE_DEVELOPMENT_SECRET` is distinct from the Gateway and Knowledge
+secrets and is restricted by Core's development verifier to that method, path and scope.
+This is a capability precheck; Knowledge still independently resolves membership,
+installation and document ACLs during retrieval.
