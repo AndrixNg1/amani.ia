@@ -16,10 +16,12 @@ import { CoreClient } from './core-client/core-client';
 import { RateLimiter } from './common/rate-limit';
 import { SafeLogger } from './common/logging';
 import { PlatformController } from './routing/platform.controller';
+import { AiController } from './routing/ai.controller';
+import { OrchestratorClient } from './orchestrator-client/orchestrator.client';
 
 @Module({
   imports: [],
-  controllers: [AppController, PlatformController],
+  controllers: [AppController, PlatformController, AiController],
   providers: [
     AppService,
     { provide: GATEWAY_CONFIG, useFactory: () => gatewayConfig() },
@@ -34,6 +36,7 @@ import { PlatformController } from './routing/platform.controller';
       inject: [GATEWAY_CONFIG],
     },
     CoreClient,
+    OrchestratorClient,
     RateLimiter,
     SafeLogger,
     { provide: APP_GUARD, useClass: AuthenticationGuard },

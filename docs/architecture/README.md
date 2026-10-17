@@ -24,9 +24,16 @@ Backend `GET /health` endpoints provide minimal process liveness. They do not ve
 
 ## Intended backend communication
 
-The browser-facing gateway is the intended entry point for application requests. It routes explicitly to Core; AI Orchestrator routing remains planned. Plugin APIs are independent backend services; the orchestrator will call them through authenticated backend-to-backend requests. Each Plugin API must independently enforce organization and resource permissions, even if an upstream service already authorized the request.
+The browser-facing gateway is the entry point for application requests. It routes to Core
+and exposes the bounded Knowledge RAG route through AI Orchestrator. Plugin APIs remain
+independent backend services; each independently enforces organization and resource
+permissions even when an upstream service already authorized the request.
 
-Gateway has explicit `/api/platform/...` routes, one bounded native-fetch Core client, authentication/service-authentication ports, Core permission checks and HTTP protections. Default identity verification denies access; optional cryptographic adapters are restricted to explicit local development. Other service integrations remain planned. A liveness response alone does not establish connectivity or authorization.
+Gateway has explicit `/api/platform/...` and `/api/ai/organizations/:organizationId/knowledge-rag`
+routes, bounded native-fetch clients, authentication/service-authentication ports, Core
+permission checks and HTTP protections. Default identity verification denies access;
+optional cryptographic adapters are restricted to explicit local development. A liveness
+response alone does not establish connectivity or authorization.
 
 The Core API implements organization membership, RBAC, plan/installation checks and internal policy HTTP endpoints. Gateway asks Core for explicit permission and Core reauthorizes business operations. A user's identity and their membership of a selected organization are separate checks. An arbitrary tenant header is never sufficient proof of either.
 
@@ -59,11 +66,11 @@ These containers support future relational/vector storage, queues/cache, and obj
 | Identity verification, service authentication, organization authorization | Core tenant policy implemented; local-only identity/service adapters; production IAM/service mechanism pending |
 | Knowledge resource access guards and tenant isolation | Implemented for Knowledge; other plugins remain future work |
 | Secure Knowledge retrieval | Implemented in Knowledge; manual validation pending |
-| AI answer generation and model orchestration | Not implemented |
+| AI Orchestrator + Knowledge RAG | Implemented locally; manual validation pending |
 | Shared packages | Four implemented packages |
 | Core/Gateway integration tests | Dedicated HTTP and PostgreSQL suites; commands in component READMEs |
 | Knowledge document processing | Current: queue, worker, extraction, normalization, chunks and embeddings; manual validation pending |
-| RAG answer generation, OCR, connectors and Data Analytics | Not implemented |
+| OCR, connectors, Data Analytics and hybrid orchestration | Not implemented |
 
 Production authentication, deployment and plugin resource controls remain open. See [Gateway](../../apps/gateway/README.md) and [Core](../../apps/core-api/README.md) for implemented behavior and validation commands.
 
@@ -75,6 +82,8 @@ Production authentication, deployment and plugin resource controls remain open. 
 Mermaid source governed by ADR-0035. Core authorization and Knowledge resource grants
 form the candidate scope before the exact pgvector cosine search. Only the current
 `ready` version of active resources with a compatible embedding profile can appear in
-results. The output is authorized evidence with Knowledge-owned provenance; RAG answer
-generation and the AI Orchestrator remain future work. No renderer command is configured,
-so no PNG was generated.
+results. The output is authorized evidence with Knowledge-owned provenance. The AI
+Orchestrator consumes that evidence and never accesses Knowledge PostgreSQL
+or pgvector directly. [Grounded Knowledge RAG](diagrams/22-ai-orchestrator-grounded-knowledge-rag.mmd)
+documents delegation, context limits, provider isolation and server-owned citations. No
+renderer command is configured, so no PNG was generated.

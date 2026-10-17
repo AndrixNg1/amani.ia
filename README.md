@@ -8,10 +8,11 @@ Core Platform persistence/authorization and explicit Gateway routing are impleme
 **Current status:** Core owns tenant policy and platform data;
 Gateway applies HTTP controls and calls Core with bounded context. Knowledge owns its
 documentary domain and a separate worker processes accepted document versions through
-bounded internal contracts. Authentication adapters are local-development-only;
-production IAM and service authentication remain architecture decisions. Secure
-retrieval, RAG, Orchestrator and frontend business features remain future work. Component
-READMEs describe configuration, commands and tests.
+bounded internal contracts. The AI Orchestrator provides a stateless Knowledge RAG flow
+through Core policy and Knowledge secure retrieval, with bounded context and server-owned
+citations. Authentication adapters are local-development-only; production IAM and service
+authentication remain architecture decisions. Component READMEs describe configuration,
+commands and tests.
 
 ## Architecture
 
@@ -26,9 +27,9 @@ flowchart LR
     UI[Website / Enterprise / Admin] -. planned .-> Gateway
     Gateway -->|local development authentication| Core[Core API]
     Core -->|owned schema| PG
-    Gateway -. planned .-> AI[AI Orchestrator]
+    Gateway -->|verified requester context| AI[AI Orchestrator]
     Gateway -. planned .-> Plugins[Five independent Plugin APIs]
-    AI -. authorized requests only — planned .-> Plugins
+    AI -->|authorized Knowledge retrieval only| Plugins
     Plugins -. planned .-> PG[(PostgreSQL + pgvector)]
     Plugins -. planned .-> Redis[(Redis)]
     Plugins -. planned .-> MinIO[(MinIO)]

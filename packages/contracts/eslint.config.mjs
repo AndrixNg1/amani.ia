@@ -10,6 +10,11 @@ export default [
   })),
   {
     files: ['**/*.ts'],
+    languageOptions: {
+      parserOptions: {
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
     rules: { '@typescript-eslint/consistent-type-imports': 'error' },
   },
   {

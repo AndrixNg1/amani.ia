@@ -15,6 +15,7 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
   constructor(
     private readonly secret: string,
     private readonly knowledgeSecret?: string,
+    private readonly orchestratorSecret?: string,
   ) {
     super();
   }
@@ -45,14 +46,25 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
     const p = raw as Partial<DevelopmentDelegation>;
     const knowledge = p.callingService === '@amani/knowledge';
-    const secret = knowledge ? this.knowledgeSecret : this.secret;
+    const orchestrator = p.callingService === '@amani/ai-orchestrator';
+    const secret = knowledge
+      ? this.knowledgeSecret
+      : orchestrator
+        ? this.orchestratorSecret
+        : this.secret;
     if (
       !secret ||
       (knowledge &&
         (p.path !== '/internal/knowledge/authorization' ||
           p.method !== 'POST' ||
           p.scope?.action !== 'authorization.check' ||
-          p.scope.resourceType !== 'policy'))
+          p.scope.resourceType !== 'policy')) ||
+      (orchestrator &&
+        (p.path !== '/internal/authorization/check' ||
+          p.method !== 'POST' ||
+          p.scope?.action !== 'authorization.check' ||
+          p.scope.resourceType !== 'policy' ||
+          p.scope.plugin !== 'knowledge'))
     )
       return null;
     const expected = createHmac('sha256', Buffer.from(secret, 'hex'))
@@ -62,7 +74,7 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
     const now = Date.now();
     if (
       p.version !== 1 ||
-      (!knowledge && p.callingService !== '@amani/gateway') ||
+      (!knowledge && !orchestrator && p.callingService !== '@amani/gateway') ||
       p.audience !== '@amani/core-api' ||
       !isUUID(p.userId) ||
       (p.organizationId !== undefined && !isUUID(p.organizationId)) ||
@@ -147,6 +159,7 @@ export function identityVerifier(
       'invalid_string',
     );
   const knowledgeSecret = source.KNOWLEDGE_CORE_DEVELOPMENT_SECRET;
+  const orchestratorSecret = source.ORCHESTRATOR_CORE_DEVELOPMENT_SECRET;
   if (
     knowledgeSecret !== undefined &&
     (!/^[a-f0-9]{64}$/.test(knowledgeSecret) || knowledgeSecret === secret)
@@ -155,5 +168,19 @@ export function identityVerifier(
       'KNOWLEDGE_CORE_DEVELOPMENT_SECRET',
       'invalid_string',
     );
-  return new DevelopmentIdentityVerifier(secret, knowledgeSecret);
+  if (
+    orchestratorSecret !== undefined &&
+    (!/^[a-f0-9]{64}$/.test(orchestratorSecret) ||
+      orchestratorSecret === secret ||
+      orchestratorSecret === knowledgeSecret)
+  )
+    throw new ConfigurationError(
+      'ORCHESTRATOR_CORE_DEVELOPMENT_SECRET',
+      'invalid_string',
+    );
+  return new DevelopmentIdentityVerifier(
+    secret,
+    knowledgeSecret,
+    orchestratorSecret,
+  );
 }

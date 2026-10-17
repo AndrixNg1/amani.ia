@@ -21,6 +21,8 @@ export const AuthenticatedOnly = () =>
   SetMetadata('gateway.authenticatedOnly', true);
 export const RequirePermission = (permission: string) =>
   SetMetadata('gateway.permission', permission);
+export const RequirePluginUse = (plugin: 'knowledge') =>
+  SetMetadata('gateway.pluginUse', plugin);
 @Injectable()
 export class AuthenticationGuard implements CanActivate {
   constructor(
@@ -87,7 +89,12 @@ export class AuthorizationGuard implements CanActivate {
       'gateway.permission',
       context.getHandler(),
     );
-    if (!permission) {
+    const plugin = this.reflector.get<'knowledge'>(
+      'gateway.pluginUse',
+      context.getHandler(),
+    );
+    const requiredPermission = plugin ? 'plugins.use' : permission;
+    if (!requiredPermission) {
       // Unscoped routes rely on Core's own self/onboarding policy. An organization
       // route without explicit metadata is always denied, including future routes.
       if (
@@ -102,7 +109,7 @@ export class AuthorizationGuard implements CanActivate {
     }
     if (
       !req.context.organizationId ||
-      !(await this.core.check(req.context, permission)).allowed
+      !(await this.core.check(req.context, requiredPermission, plugin)).allowed
     )
       throw new ForbiddenException();
     // Unauthorised outsiders cannot spend an organization's shared quota.

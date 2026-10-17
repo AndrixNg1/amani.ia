@@ -3,9 +3,6 @@
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "resolvePackageJsonExports": true,
-    "paths": {
-      "@amani/contracts": ["../../packages/contracts/src/index.ts"]
-    },
     "esModuleInterop": true,
     "isolatedModules": true,
     "declaration": true,

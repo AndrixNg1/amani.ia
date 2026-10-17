@@ -8,7 +8,8 @@ import { principalOf } from '../common/context';
 import type { RequestContext } from '../common/context';
 import type { GatewayConfig } from '../config/gateway.config';
 
-export interface CoreCall {
+export interface ServiceCall {
+  audience: '@amani/core-api' | '@amani/ai-orchestrator';
   method: 'GET' | 'POST';
   path: string;
   body: string;
@@ -19,7 +20,7 @@ export abstract class ServiceAuthentication {
   abstract readonly configured: boolean;
   abstract headers(
     context: RequestContext,
-    call: CoreCall,
+    call: ServiceCall,
   ): Record<string, string>;
 }
 class DisabledServiceAuthentication extends ServiceAuthentication {
@@ -33,14 +34,14 @@ export class DevelopmentServiceAuthentication extends ServiceAuthentication {
   constructor(private readonly secret: string) {
     super();
   }
-  headers(ctx: RequestContext, call: CoreCall): Record<string, string> {
+  headers(ctx: RequestContext, call: ServiceCall): Record<string, string> {
     const now = Date.now();
     const payload: DevelopmentDelegation = {
       version: 1,
       requestId: ctx.requestId,
       correlationId: ctx.correlationId,
       callingService: '@amani/gateway',
-      audience: '@amani/core-api',
+      audience: call.audience,
       userId: principalOf(ctx).userId,
       ...(ctx.organizationId ? { organizationId: ctx.organizationId } : {}),
       scope: call.scope,

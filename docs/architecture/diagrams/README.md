@@ -61,6 +61,7 @@ Use the diagram links to open the full-resolution PNG. The preview column provid
 | [10 Knowledge ingestion](./10-knowledge-ingestion.mmd) | Authorized upload and processing to ready chunks | ADR-0032–0034 |
 | [20 Document processing](./20-document-processing.mmd) | Worker lifecycle and bounded internal publication | ADR-0033–0034 |
 | [21 Secure Knowledge retrieval](./21-secure-knowledge-retrieval.mmd) | Authorization before pgvector retrieval; evidence only | ADR-0035 |
+| [22 AI Orchestrator grounded Knowledge RAG](./22-ai-orchestrator-grounded-knowledge-rag.mmd) | Delegated requester, bounded evidence, structured output and server-owned citations | ADR-0036 |
 
 ## How to read these visuals
 
