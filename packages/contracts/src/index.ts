@@ -27,9 +27,13 @@ export interface DevelopmentDelegation {
   readonly correlationId: CorrelationId;
   readonly callingService:
     | '@amani/gateway'
+    | '@amani/ai-orchestrator'
     | '@amani/knowledge'
     | '@amani/document-processing';
-  readonly audience: '@amani/core-api' | '@amani/knowledge';
+  readonly audience:
+    | '@amani/core-api'
+    | '@amani/ai-orchestrator'
+    | '@amani/knowledge';
   readonly userId: UserId;
   readonly organizationId?: OrganizationId;
   readonly scope: AuthorizationScope;
@@ -193,3 +197,11 @@ export type {
   KnowledgeRetrievalResultV1,
   KnowledgeRetrievalResponseV1,
 } from './knowledge';
+
+export type {
+  KnowledgeRagCitationV1,
+  KnowledgeRagGenerationMetadataV1,
+  KnowledgeRagRequestV1,
+  KnowledgeRagResponseV1,
+  KnowledgeRagStatusV1,
+} from './rag';

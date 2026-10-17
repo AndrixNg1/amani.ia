@@ -68,14 +68,16 @@ the shared secret against a business call, provision a user, or prove production
 | `GET /api/platform/organizations/:organizationId/memberships/:userId` | Core `memberships/by-user/:id` | `members.read` |
 | `GET /api/platform/organizations/:organizationId/permissions` | Internal effective-permissions endpoint | `organization.read` |
 | `GET /api/platform/organizations/:organizationId/plugins/:pluginKey/access` | Internal plugin-access endpoint | `organization.read`, then explicit Core `plugins.use` allow |
+| `POST /api/ai/organizations/:organizationId/knowledge-rag` | AI Orchestrator `POST /ai/knowledge-rag` | `plugins.use`; Orchestrator and Knowledge reauthorize independently |
 
 Organization creation accepts only `{name, slug}`; membership creation only `{userId}`,
 where that ID is the target member, never the caller. IDs must be UUIDs and are normalized
 to lowercase. Plugin keys are the five declared plugin names. Unknown JSON properties,
 invalid shapes and invalid route IDs return 400. No arbitrary path/query/header proxy
 exists. Global user creation, platform administration and all other internal Core
-routes are unexposed. `/api/ai`, `/api/knowledge`, `/api/analytics`, `/api/conversations`
-and other future families return 404; no Plugin API is contacted.
+routes are unexposed. Only the bounded Knowledge RAG route exists under `/api/ai`.
+`/api/knowledge`, `/api/analytics`, `/api/conversations` and other future families
+return 404; no arbitrary Plugin API is contacted.
 
 ## Identity, context and header policy
 
@@ -97,7 +99,8 @@ from incoming headers before authentication/routing. Core requests are construct
 from an allowlist: `accept`, optional `content-type`, generated `x-request-id`, validated
 `x-correlation-id`, and the service-auth provider's proof. Node adds transport headers
 such as Host/Content-Length. Client Authorization, cookies and arbitrary headers are
-never copied to Core. Proxy headers do not control the limiter's source address.
+never copied to Core or AI Orchestrator. Proxy headers do not control the limiter's
+source address.
 
 ## Development authentication
 
@@ -210,6 +213,9 @@ set `NODE_ENV=production` for you.
 | `CORE_API_BASE_URL` | `http://127.0.0.1:4001`; origin only, no credentials/query/path; HTTPS in production |
 | `CORE_API_TIMEOUT_MS` | 3000; 10–30000 |
 | `CORE_API_MAX_RESPONSE_BYTES` | 262144; 256–1048576 |
+| `ORCHESTRATOR_API_BASE_URL` | `http://127.0.0.1:4002`; origin only, no credentials/query/path; HTTPS in production |
+| `ORCHESTRATOR_API_TIMEOUT_MS` | 30000; 100–120000 |
+| `ORCHESTRATOR_API_MAX_RESPONSE_BYTES` | 262144; 256–1048576 |
 | `GATEWAY_ALLOWED_ORIGINS` | comma-separated exact origins; empty disables browser origins |
 | `GATEWAY_BODY_LIMIT_BYTES` | 65536; 256–1048576 |
 | `GATEWAY_RATE_WINDOW_MS` | 60000; 100–3600000 |
@@ -228,9 +234,11 @@ node -e 'process.stdout.write(require("node:crypto").randomBytes(32).toString("h
 ```
 
 Set both Gateway modes to `development`, fill the bearer and synthetic user's ID,
-and copy the DIFFERENT service secret into Core's `.env`. In Core also set
+and copy the DIFFERENT service secret into Core's `.env` and
+`ORCHESTRATOR_GATEWAY_DEVELOPMENT_SECRET` in the Orchestrator `.env`. In Core also set
 `NODE_ENV=development` and `CORE_SERVICE_AUTH_MODE=development`, retaining its current
-PostgreSQL settings. Start Core with `npm run dev:core` and Gateway in a second terminal.
+PostgreSQL settings. Start Core with `npm run dev:core`, AI Orchestrator with
+`npm run dev:orchestrator`, and Gateway in a separate terminal.
 The Core development seed intentionally creates no users or platform administrator.
 There is no public bootstrap/admin/login route: manual user provisioning remains a
 separate controlled task. To exercise successful calls now without permanent identities,
