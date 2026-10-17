@@ -13,7 +13,12 @@
     "target": "ES2023",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
+    "paths": {
+      "@amani/config": ["../../packages/config/src/index.ts"],
+      "@amani/contracts": ["../../packages/contracts/src/index.ts"],
+      "@amani/shared": ["../../packages/shared/src/index.ts"],
+      "@amani/types": ["../../packages/types/src/index.ts"]
+    },
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
