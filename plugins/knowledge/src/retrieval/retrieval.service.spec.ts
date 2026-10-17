@@ -10,8 +10,23 @@ import type {
 import type { Actor } from '../common/context';
 import type { DatabaseService } from '../database/database';
 import type { ResourcePolicy } from '../authorization/resource-policy';
-import type { RetrievalEmbeddingProvider } from './retrieval.embedding';
+import type {
+  RetrievalEmbeddingProfile,
+  RetrievalEmbeddingProvider,
+} from './retrieval.embedding';
 import { RetrievalService } from './retrieval.service';
+
+type ExecuteMock = jest.Mock<Promise<{ rows: readonly unknown[] }>, [SQL]>;
+type PolicyMock = {
+  readonly coreAuthorize: jest.Mock<
+    Promise<KnowledgeAuthorizationResponse>,
+    [Actor, string, 'read']
+  >;
+};
+type EmbeddingMock = {
+  readonly profile: jest.Mock<RetrievalEmbeddingProfile, []>;
+  readonly embedQuery: jest.Mock<Promise<readonly number[]>, [string]>;
+};
 
 jest.mock('../common/config', () => ({
   knowledgeConfig: () => ({
@@ -58,17 +73,23 @@ const authorization: KnowledgeAuthorizationResponse = {
 };
 
 function serviceWith(rows: readonly unknown[] = []) {
-  const execute = jest.fn(() => Promise.resolve({ rows }));
+  const execute: ExecuteMock = jest.fn((_statement: SQL) =>
+    Promise.resolve({ rows }),
+  );
   const database = { db: { execute } } as unknown as DatabaseService;
-  const policy = {
+  const policy: PolicyMock = {
     coreAuthorize: jest.fn(() => Promise.resolve(authorization)),
-  } as unknown as ResourcePolicy;
-  const embedding = {
+  };
+  const embedding: EmbeddingMock = {
     profile: jest.fn(() => profile),
     embedQuery: jest.fn(() => Promise.resolve([1, 0, 0])),
-  } as unknown as RetrievalEmbeddingProvider;
+  };
   return {
-    service: new RetrievalService(database, policy, embedding),
+    service: new RetrievalService(
+      database,
+      policy as unknown as ResourcePolicy,
+      embedding as unknown as RetrievalEmbeddingProvider,
+    ),
     execute,
     policy,
     embedding,
@@ -123,9 +144,7 @@ describe('secure Knowledge retrieval', () => {
 
   it('fails closed before embedding or SQL when Core rejects another organization', async () => {
     const { service, policy, embedding, execute } = serviceWith();
-    (policy.coreAuthorize as jest.Mock).mockRejectedValueOnce(
-      new Error('denied'),
-    );
+    policy.coreAuthorize.mockRejectedValueOnce(new Error('denied'));
     await expect(
       service.retrieve(actor, {
         organizationId: organizationB,
@@ -157,7 +176,8 @@ describe('secure Knowledge retrieval', () => {
       knowledgeBaseId: '00000000-0000-4000-8000-000000000102',
       query: 'compensation reviews',
     });
-    const [statement] = execute.mock.calls[0] as [SQL];
+    const statement = execute.mock.calls[0]?.[0];
+    if (!statement) throw new Error('Expected retrieval SQL statement');
     const query = new PgDialect().sqlToQuery(statement);
     expect(query.sql).toContain('c.organization_id=$');
     expect(query.sql).toContain("b.status='active'");
@@ -172,7 +192,7 @@ describe('secure Knowledge retrieval', () => {
 
   it('does not query chunks when compatible query embedding fails', async () => {
     const { service, embedding, execute } = serviceWith();
-    (embedding.embedQuery as jest.Mock).mockRejectedValueOnce(
+    embedding.embedQuery.mockRejectedValueOnce(
       new Error('embedding unavailable'),
     );
     await expect(
