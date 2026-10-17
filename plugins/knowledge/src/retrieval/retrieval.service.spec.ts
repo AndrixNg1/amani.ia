@@ -54,7 +54,7 @@ const actor: Actor = {
   requestId: '00000000-0000-4000-8000-000000000011' as RequestId,
   correlationId: '00000000-0000-4000-8000-000000000012' as CorrelationId,
 };
-const profile = {
+const profile: RetrievalEmbeddingProfile = {
   provider: 'deterministic-test',
   model: 'deterministic-v1',
   dimension: 3,
@@ -73,16 +73,22 @@ const authorization: KnowledgeAuthorizationResponse = {
 };
 
 function serviceWith(rows: readonly unknown[] = []) {
-  const execute: ExecuteMock = jest.fn((_statement: SQL) =>
-    Promise.resolve({ rows }),
-  );
+  const execute: ExecuteMock = jest.fn<
+    Promise<{ rows: readonly unknown[] }>,
+    [SQL]
+  >(() => Promise.resolve({ rows }));
   const database = { db: { execute } } as unknown as DatabaseService;
   const policy: PolicyMock = {
-    coreAuthorize: jest.fn(() => Promise.resolve(authorization)),
+    coreAuthorize: jest.fn<
+      Promise<KnowledgeAuthorizationResponse>,
+      [Actor, string, 'read']
+    >(() => Promise.resolve(authorization)),
   };
   const embedding: EmbeddingMock = {
-    profile: jest.fn(() => profile),
-    embedQuery: jest.fn(() => Promise.resolve([1, 0, 0])),
+    profile: jest.fn<RetrievalEmbeddingProfile, []>(() => profile),
+    embedQuery: jest.fn<Promise<readonly number[]>, [string]>(() =>
+      Promise.resolve([1, 0, 0]),
+    ),
   };
   return {
     service: new RetrievalService(
