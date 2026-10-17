@@ -1,62 +1,96 @@
 # Data Analytics Plugin API
 
-`@amani/data-analytics` — An independent service intended for authorized analysis of organization data. This workspace uses NestJS 11, TypeScript and the Express adapter. It currently contains the starter `GET /` route and a minimal `GET /health` endpoint.
+`@amani/data-analytics` is Amani IA's boundary for structured enterprise data. The
+current foundation owns source references, datasets, immutable upload versions, schema
+metadata, local resource grants, constrained analysis requests and result metadata.
 
-## Responsibilities and relationships
+It does not parse CSV/XLSX rows, connect to customer databases, run SQL, execute
+Python, invoke an LLM or run a queue worker. Those responsibilities remain outside this
+phase; the Python Data Engine is the planned execution boundary.
 
-Expose analytics operations and results scoped to the organization and the requesting user; apply the same access controls to aggregates, exports and cached results.
+## Architecture and security
 
-The AI Orchestrator will call this API for analytics capabilities. Core API will provide the organization and authorization contract. No data sources, query engines or downstream clients are connected.
+Gateway sends a signed, short-lived delegated user and organization context. This
+service rechecks Core membership, entitlement and permission policy, then requires its
+own default-deny dataset ACL. Core policy alone never grants access to a dataset.
 
-These responsibilities describe the intended architecture. The current implementation does not perform business operations or make service-to-service requests. See the [repository overview](../../README.md) and [architecture documentation](../../docs/README.md).
+All owned PostgreSQL records are scoped by `organization_id` and resource ID. The
+plugin owns the `data_analytics` schema and does not use cross-schema foreign keys.
+Dataset, table and column grants are distinct. Restricted columns are excluded from the
+server-derived scope stored with an analysis request.
 
-## Local development
+Manual uploads receive a short-lived S3-compatible POST target for one opaque object
+key, exact media type and exact content length. The bucket must be private and
+versioned. Finalization verifies object metadata and records a pinned version/checksum;
+no permanent object URL is returned. Connector sources hold an opaque reference only,
+never connection credentials or a live connection.
 
-Follow the installation and prerequisite instructions in the [root README](../../README.md), including its reserved manual cleanup/install sequence. Install dependencies at the repository root after review; do not install separately inside this workspace.
+See [ADR-0037](../../docs/architecture/adr/0037-structured-data-analytics.md) and the
+[editable architecture diagram](../../docs/architecture/diagrams/23-structured-data-analytics.mmd).
 
-Run from the repository root:
+## API surface
+
+Gateway exposes the public prefix `/api/analytics/organizations/:organizationId` for:
+
+- connector-source registration and archival;
+- datasets, versions and schema metadata;
+- private CSV/XLSX upload initiation and finalization;
+- dataset/table/column grant administration;
+- constrained analysis-request creation and result metadata retrieval.
+
+The analysis vocabulary is `profile`, `describe`, `aggregate`, `group`, `filter`,
+`correlation` and `chart_data`. Parameters are validated against the operation; raw SQL,
+arbitrary code and unrestricted query fields are rejected.
+
+## Configuration
+
+Copy the example before starting the service:
 
 ```bash
 cp plugins/data-analytics/.env.example plugins/data-analytics/.env
-npm run dev --workspace @amani/data-analytics
 ```
 
-The service listens at `http://127.0.0.1:4102`. `dev` aliases the existing `start:dev` command. npm workspace commands run with this project's directory as the working directory. Startup loads that directory's optional `.env` with Node's built-in `process.loadEnvFile`; shell environment values take precedence. The repository-root `.env` configures infrastructure and is not loaded by this application. Node.js 22.17.0 is the repository baseline.
+Set the plugin database password, `CORE_API_URL`, a distinct local Gateway delegation
+secret, a distinct Data-to-Core secret and the private MinIO/S3 credentials. The
+Gateway's `DEVELOPMENT_SERVICE_SECRET` must match
+`DATA_ANALYTICS_DEVELOPMENT_SERVICE_SECRET`; Core's
+`DATA_ANALYTICS_CORE_DEVELOPMENT_SECRET` must match the Data-to-Core secret. Development
+authentication is restricted to loopback `development`/`test` configurations.
 
-## Environment
+## Manual validation commands
 
-| Variable | Default | Current behavior |
-| --- | --- | --- |
-| `HOST` | `127.0.0.1` | Network interface for the HTTP listener. Use `0.0.0.0` only when intentionally exposing the service, for example in a container. |
-| `PORT` | `4102` | HTTP port; startup rejects values outside the integer range 1–65535. |
-| `CORE_API_URL` | Suggested `http://127.0.0.1:4001` | Reserved, commented example for a future service client; not currently read. |
-
-
-No database, Redis or object-storage adapter currently reads infrastructure connection settings. Coordinate future connection variables and credentials with the root infrastructure configuration; examples must never contain real credentials. Loopback URLs are for processes running on the host. Future containerized clients must use the appropriate Compose service names instead.
-
-## Health and tests
+Run these from the repository root after reviewing local `.env` files. The dependency
+manifest changed, so the root install is required before any command that resolves the
+new AWS/Drizzle dependencies.
 
 ```bash
-curl --fail http://127.0.0.1:4102/health
-npm run lint:check --workspace @amani/data-analytics
-npm run typecheck --workspace @amani/data-analytics
-npm run test --workspace @amani/data-analytics -- --runInBand
-npm run test:e2e --workspace @amani/data-analytics -- --runInBand
-npm run build --workspace @amani/data-analytics
-# Start the compiled application after a successful build:
-npm run start:prod --workspace @amani/data-analytics
+npm install
+npm run infra:up -- --no-build --pull never
+npm run db:migrate --workspace=@amani/core-api
+npm run db:seed --workspace=@amani/core-api
+npm run db:migrate --workspace=@amani/data-analytics
+npm run build --workspace=@amani/config
+npm run build --workspace=@amani/types
+npm run build --workspace=@amani/contracts
+npm run build --workspace=@amani/shared
+npm run lint:check --workspace=@amani/data-analytics
+npm run typecheck --workspace=@amani/data-analytics
+npm run build --workspace=@amani/data-analytics
+npm run test --workspace=@amani/data-analytics -- --runInBand
+npm run test:e2e --workspace=@amani/data-analytics -- --runInBand
 ```
 
-`GET /health` returns HTTP 200 with `{"status":"ok","service":"@amani/data-analytics"}`. It is public process liveness only; it does not check PostgreSQL, pgvector, Redis, MinIO, downstream APIs, authorization or model providers. No readiness endpoint exists yet. `GET /` retains the starter `Hello World!` response.
+Start Core, Data Analytics and Gateway in separate terminals with their existing
+`npm run dev:*` root commands. Check `/health` and `/health/ready` on Data Analytics.
+Then create an organization, ensure Core grants `analytics.datasets.read` and
+`analytics.datasets.analyze` to a suitable role, create/upload a dataset through the
+Gateway, and verify: one tenant cannot retrieve another tenant's dataset, a user without
+a local dataset grant receives a denial, restricted columns are absent from analysis
+scope, and a malformed/oversized/wrong-type upload is rejected.
 
-The unit suite covers the starter controller. The e2e suite boots the Nest application and checks both HTTP routes, including the service identity in the health response. It does not start external infrastructure or prove tenant isolation. `typecheck` emits no files. `lint:check` is non-mutating and fails on warnings; the preserved `lint` script applies fixes. Existing `test:watch` and `test:cov` commands remain available.
+## Phase boundary
 
-## Security and implementation limits
-
-Data-source integration, analytics operations, persistence and access-control enforcement are not implemented.
-
-Every future protected route must authenticate the caller, verify active organization membership and plugin entitlement, and enforce the requesting user's resource permissions. Organization IDs supplied by a client are not sufficient proof of access. Scope database queries, vector retrieval, object keys, caches and background work to the verified organization and authorized resources; reject missing or invalid context. A service identity alone must not grant access to all tenant data.
-
-There are no authentication guards or tenant-isolation controls in this scaffold. Do not connect real customer data or expose protected business operations before those controls and cross-tenant negative tests are implemented. Health success is not a security or production-readiness guarantee.
-
-The package remains private and `UNLICENSED`. The Nest framework's license does not select a license for Amani IA; see [the license decision](../../docs/LICENSE-DECISION.md).
+This service stores only intent and metadata for analytics execution. It must not be
+treated as a data engine yet. Phase 10 will define the authenticated job contract,
+revalidation, bounded execution, artifact handling, cancellation and audit behavior
+between this API and the Python Data Engine.

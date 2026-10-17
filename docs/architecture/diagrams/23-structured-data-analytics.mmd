@@ -1,0 +1,14 @@
+flowchart LR
+    User[Verified user] --> Gateway[Gateway]
+    Gateway -->|signed bounded delegation| Analytics[Data Analytics API]
+    Analytics -->|membership, entitlement, permission| Core[Core policy API]
+    Analytics -->|local dataset/table/column ACL| Metadata[(data_analytics schema)]
+    Analytics -->|short-lived versioned upload| MinIO[(private versioned object storage)]
+    ConnectorRef[Opaque connector reference] --> Analytics
+    Analytics --> Request[Constrained analysis request + derived scope]
+    Request -. Phase 10, not implemented .-> Engine[Python Data Engine]
+
+    classDef implemented fill:#d7f5df,stroke:#258040,color:#111;
+    classDef future fill:#fff3cd,stroke:#9a7418,color:#111,stroke-dasharray: 5 5;
+    class Gateway,Analytics,Core,Metadata,MinIO,ConnectorRef,Request implemented;
+    class Engine future;
