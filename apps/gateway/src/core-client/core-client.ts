@@ -111,7 +111,11 @@ export class CoreClient {
       userId,
     );
   }
-  async check(ctx: RequestContext, permission: string) {
+  async check(
+    ctx: RequestContext,
+    permission: string,
+    pluginKey?: PluginName,
+  ) {
     const org = this.org(ctx);
     return response.decision(
       await this.send(
@@ -119,8 +123,16 @@ export class CoreClient {
         'POST',
         '/internal/authorization/check',
         ctx,
-        { action: 'authorization.check', resourceType: 'policy' },
-        { organizationId: org, permission },
+        {
+          action: 'authorization.check',
+          resourceType: 'policy',
+          ...(pluginKey ? { plugin: pluginKey } : {}),
+        },
+        {
+          organizationId: org,
+          permission,
+          ...(pluginKey ? { pluginKey } : {}),
+        },
       ),
       org,
       principalOf(ctx).userId,
@@ -183,7 +195,13 @@ export class CoreClient {
         headers['x-correlation-id'] = ctx.correlationId;
         Object.assign(
           headers,
-          this.auth.headers(ctx, { method, path, body, scope }),
+          this.auth.headers(ctx, {
+            audience: '@amani/core-api',
+            method,
+            path,
+            body,
+            scope,
+          }),
         );
       }
       const res = await fetch(this.config.coreBaseUrl + path, {

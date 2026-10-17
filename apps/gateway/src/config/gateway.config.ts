@@ -46,6 +46,21 @@ export function gatewayConfig(source: EnvironmentSource = process.env) {
   ) {
     throw new ConfigurationError('CORE_API_BASE_URL', 'invalid_url');
   }
+  const orchestratorUrl = new URL(
+    env.url('ORCHESTRATOR_API_BASE_URL', {
+      default: 'http://127.0.0.1:4002',
+    }),
+  );
+  if (
+    orchestratorUrl.username ||
+    orchestratorUrl.password ||
+    orchestratorUrl.search ||
+    orchestratorUrl.hash ||
+    orchestratorUrl.pathname !== '/' ||
+    (production && orchestratorUrl.protocol !== 'https:')
+  ) {
+    throw new ConfigurationError('ORCHESTRATOR_API_BASE_URL', 'invalid_url');
+  }
   const authMode = source.GATEWAY_AUTH_MODE ?? 'disabled';
   const serviceMode = source.GATEWAY_SERVICE_AUTH_MODE ?? 'disabled';
   for (const [key, mode] of [
@@ -59,7 +74,8 @@ export function gatewayConfig(source: EnvironmentSource = process.env) {
       (production ||
         !['development', 'test'].includes(source.NODE_ENV ?? '') ||
         !local(host) ||
-        !local(coreUrl.hostname))
+        !local(coreUrl.hostname) ||
+        !local(orchestratorUrl.hostname))
     ) {
       throw new ConfigurationError(key, 'invalid_environment');
     }
@@ -111,6 +127,7 @@ export function gatewayConfig(source: EnvironmentSource = process.env) {
     host,
     port,
     coreBaseUrl: coreUrl.origin,
+    orchestratorBaseUrl: orchestratorUrl.origin,
     coreTimeoutMs: env.integer('CORE_API_TIMEOUT_MS', {
       default: 3000,
       min: 10,
@@ -121,6 +138,15 @@ export function gatewayConfig(source: EnvironmentSource = process.env) {
       min: 256,
       max: 1048576,
     }),
+    orchestratorTimeoutMs: env.integer('ORCHESTRATOR_API_TIMEOUT_MS', {
+      default: 30000,
+      min: 100,
+      max: 120000,
+    }),
+    orchestratorMaxResponseBytes: env.integer(
+      'ORCHESTRATOR_API_MAX_RESPONSE_BYTES',
+      { default: 262144, min: 256, max: 1048576 },
+    ),
     bodyLimitBytes: env.integer('GATEWAY_BODY_LIMIT_BYTES', {
       default: 65536,
       min: 256,
