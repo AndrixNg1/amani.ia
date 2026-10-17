@@ -1,67 +1,158 @@
 # AI Orchestrator
 
-`@amani/ai-orchestrator` — The intended coordinator for AI requests and calls to independent Plugin APIs. This workspace uses NestJS 11, TypeScript and the Express adapter. It currently contains the starter `GET /` route and a minimal `GET /health` endpoint.
+`@amani/ai-orchestrator` provides Amani's first stateless, documentary RAG operation.
+It receives a Gateway-verified requester context, checks the existing Core Knowledge
+capability, obtains already-authorized evidence from Knowledge, builds bounded context,
+generates a structured answer and constructs citations from server-owned provenance.
 
-## Responsibilities and relationships
+## Responsibilities
 
-Plan and execute authorized plugin calls and construct model context exclusively from data the requesting user may access.
+- Verify the Gateway's short-lived service delegation in local development.
+- Preserve the requester user and organization context when calling Core and Knowledge.
+- Ask Core for the existing `plugins.use` policy check for the `knowledge` plugin.
+- Call Knowledge `POST /knowledge/retrieval`; Knowledge remains responsible for ACL-aware
+  retrieval, active membership, plugin availability and document resource grants.
+- Deduplicate already-authorized chunks, retain ranking order and use only whole chunks
+  within the configured evidence budget.
+- Assign request-local evidence IDs (`E1`, `E2`, ...) and validate model-selected IDs.
+- Return `insufficient_evidence` when no authorized evidence fits or no valid citation
+  can support the model result.
 
-The Gateway will submit AI requests. Core API will provide organization and authorization context; the five Plugin APIs will provide domain capabilities. No HTTP clients or model providers exist yet.
+## Non-responsibilities
 
-These responsibilities describe the intended architecture. The current implementation does not perform business operations or make service-to-service requests. See the [repository overview](../../README.md) and [architecture documentation](../../docs/README.md).
+This service does not access Knowledge PostgreSQL, pgvector, MinIO, Redis, document ACL
+tables or object paths. It does not implement Analytics, external connectors, query
+rewriting, agent loops, arbitrary tools, conversation history, evaluation or unrestricted
+general chat. A cited document must be reauthorized by Knowledge when opened later.
 
-## Local development
+## Request flow
 
-Follow the installation and prerequisite instructions in the [root README](../../README.md), including its reserved manual cleanup/install sequence. Install dependencies at the repository root after review; do not install separately inside this workspace.
+```mermaid
+sequenceDiagram
+  participant G as Gateway
+  participant O as AI Orchestrator
+  participant C as Core
+  participant K as Knowledge
+  participant L as Generation Provider
+  G->>O: Signed requester delegation + question
+  O->>C: plugins.use for Knowledge
+  C-->>O: Current policy decision
+  O->>K: Signed on-behalf-of retrieval
+  K->>C: Current Knowledge policy check
+  K-->>O: Authorized evidence + provenance only
+  O->>L: Bounded, untrusted evidence context
+  L-->>O: Structured answer + evidence IDs
+  O-->>G: Validated citations from Knowledge provenance
+```
 
-Run from the repository root:
+The service identity proves the calling backend; it does not give that backend global
+document access. Knowledge independently applies the requester's current authorization.
+
+## API
+
+Gateway exposes the public backend route:
+
+```text
+POST /api/ai/organizations/:organizationId/knowledge-rag
+```
+
+The Orchestrator's protected internal route is:
+
+```text
+POST /ai/knowledge-rag
+```
+
+Request body (`KnowledgeRagRequestV1`):
+
+```json
+{
+  "organizationId": "UUID",
+  "question": "How are annual compensation reviews handled?",
+  "knowledgeBaseId": "UUID (optional)",
+  "topK": 6,
+  "minSimilarityBps": 0
+}
+```
+
+`topK` is limited to 20 at the HTTP boundary and then to the Orchestrator's configured
+limit. Knowledge has its own independent limits and similarity floor.
+
+Response (`KnowledgeRagResponseV1`) contains `answered` or `insufficient_evidence`, a
+safe answer, server-owned citations, retrieval counts/profile, safe generation metadata,
+request ID and correlation ID. It never returns document content outside the answer,
+storage URLs/keys, ACL records, provider secrets or authorization internals.
+
+## Prompt and provider boundaries
+
+The current prompt profile is `knowledge-rag-v1`. It states that document chunks are
+untrusted data, cannot override policy and cannot invoke code, URLs, commands or tools.
+The question and each evidence item are separately delimited; evidence IDs are generated
+by the server, not by the model.
+
+`GenerationProvider` is provider-neutral. `openai-compatible` sends a bounded request to
+the configured server-side base URL and asks for JSON `{ answer, evidenceIds }`.
+`deterministic-test` is a no-network adapter allowed only in development/test. It is not
+valid production configuration. Invalid or fabricated evidence IDs are ignored; if no
+valid citation remains, the result is `insufficient_evidence`.
+
+## Configuration
+
+Copy the template and keep every value server-side:
 
 ```bash
 cp apps/ai-orchestrator/.env.example apps/ai-orchestrator/.env
-npm run dev --workspace @amani/ai-orchestrator
 ```
 
-The service listens at `http://127.0.0.1:4002`. `dev` aliases the existing `start:dev` command. npm workspace commands run with this project's directory as the working directory. Startup loads that directory's optional `.env` with Node's built-in `process.loadEnvFile`; shell environment values take precedence. The repository-root `.env` configures infrastructure and is not loaded by this application. Node.js 22.17.0 is the repository baseline.
+| Variable group | Purpose |
+| --- | --- |
+| `ORCHESTRATOR_SERVICE_AUTH_MODE` | `disabled` by default; `development` enables local signed Gateway delegation only. |
+| `ORCHESTRATOR_GATEWAY_DEVELOPMENT_SECRET` | Must equal Gateway `DEVELOPMENT_SERVICE_SECRET`. |
+| `ORCHESTRATOR_CORE_DEVELOPMENT_SECRET` | Distinct Orchestrator-to-Core secret; configure the same value in Core. |
+| `ORCHESTRATOR_KNOWLEDGE_DEVELOPMENT_SECRET` | Distinct Orchestrator-to-Knowledge secret; configure the same value in Knowledge. |
+| `CORE_API_URL`, `KNOWLEDGE_API_URL` | Internal Core and Knowledge base URLs. |
+| `ORCHESTRATOR_RAG_*` | Retrieval, evidence chunk and character limits. |
+| `ORCHESTRATOR_GENERATION_*` | Provider, model, timeout, output limit and temperature basis points. |
 
-## Environment
+For a real provider set `ORCHESTRATOR_GENERATION_PROVIDER=openai-compatible`,
+`ORCHESTRATOR_GENERATION_BASE_URL`, `ORCHESTRATOR_GENERATION_MODEL` and the server-only
+`ORCHESTRATOR_GENERATION_API_KEY`. Do not commit the key or pass it to a browser.
 
-| Variable | Default | Current behavior |
-| --- | --- | --- |
-| `HOST` | `127.0.0.1` | Network interface for the HTTP listener. Use `0.0.0.0` only when intentionally exposing the service, for example in a container. |
-| `PORT` | `4002` | HTTP port; startup rejects values outside the integer range 1–65535. |
-| `CORE_API_URL` | Suggested `http://127.0.0.1:4001` | Reserved, commented example for a future service client; not currently read. |
-| `KNOWLEDGE_API_URL` | Suggested `http://127.0.0.1:4101` | Reserved, commented example for a future service client; not currently read. |
-| `DATA_ANALYTICS_API_URL` | Suggested `http://127.0.0.1:4102` | Reserved, commented example for a future service client; not currently read. |
-| `CONVERSATIONS_API_URL` | Suggested `http://127.0.0.1:4103` | Reserved, commented example for a future service client; not currently read. |
-| `CONNECTORS_API_URL` | Suggested `http://127.0.0.1:4104` | Reserved, commented example for a future service client; not currently read. |
-| `EVALUATION_API_URL` | Suggested `http://127.0.0.1:4105` | Reserved, commented example for a future service client; not currently read. |
+## Logging, failures and health
 
+Logs record request/correlation IDs, organization ID, result/evidence/citation counts,
+provider/model metadata, status and duration. They do not routinely record questions,
+answers, prompts, chunks, URLs or API keys.
 
-No database, Redis or object-storage adapter currently reads infrastructure connection settings. Coordinate future connection variables and credentials with the root infrastructure configuration; examples must never contain real credentials. Loopback URLs are for processes running on the host. Future containerized clients must use the appropriate Compose service names instead.
+Core, Knowledge and generation failures are normalized to safe HTTP errors. Each external
+step has a separate timeout; generation is not automatically retried. `GET /health` is
+process liveness only and does not prove downstream readiness, authorization or model
+availability.
 
-## Health and tests
+## Manual commands
+
+Run from the repository root after reviewing manifests and local environment values:
 
 ```bash
-curl --fail http://127.0.0.1:4002/health
-npm run lint:check --workspace @amani/ai-orchestrator
-npm run typecheck --workspace @amani/ai-orchestrator
-npm run test --workspace @amani/ai-orchestrator -- --runInBand
-npm run test:e2e --workspace @amani/ai-orchestrator -- --runInBand
-npm run build --workspace @amani/ai-orchestrator
-# Start the compiled application after a successful build:
-npm run start:prod --workspace @amani/ai-orchestrator
+npm install
+npm run lint:check --workspace=@amani/contracts
+npm run typecheck --workspace=@amani/contracts
+npm run build --workspace=@amani/contracts
+npm run lint:check --workspace=@amani/ai-orchestrator
+npm run typecheck --workspace=@amani/ai-orchestrator
+npm run build --workspace=@amani/ai-orchestrator
+npm run test --workspace=@amani/ai-orchestrator -- --runInBand
+npm run test:e2e --workspace=@amani/ai-orchestrator -- --runInBand
 ```
 
-`GET /health` returns HTTP 200 with `{"status":"ok","service":"@amani/ai-orchestrator"}`. It is public process liveness only; it does not check PostgreSQL, pgvector, Redis, MinIO, downstream APIs, authorization or model providers. No readiness endpoint exists yet. `GET /` retains the starter `Hello World!` response.
+Start Core, Knowledge and AI Orchestrator in separate terminals only after their local
+environment files share the intended development secrets:
 
-The unit suite covers the starter controller. The e2e suite boots the Nest application and checks both HTTP routes, including the service identity in the health response. It does not start external infrastructure or prove tenant isolation. `typecheck` emits no files. `lint:check` is non-mutating and fails on warnings; the preserved `lint` script applies fixes. Existing `test:watch` and `test:cov` commands remain available.
+```bash
+npm run dev:core
+npm run dev:knowledge
+npm run dev:orchestrator
+npm run dev:gateway
+```
 
-## Security and implementation limits
-
-Model integration, orchestration, authorization-aware retrieval and service clients are not implemented. Never retrieve all tenant data and filter it only after model context construction.
-
-Future protected routes must authenticate the caller and enforce active organization membership and resource permissions. Forward only verified identity and organization context to other services; downstream Plugin APIs must independently enforce tenant isolation and user permissions. A service identity alone must not grant access to all tenant data.
-
-There are no authentication guards or tenant-isolation controls in this scaffold. Do not connect real customer data or expose protected business operations before those controls and cross-tenant negative tests are implemented. Health success is not a security or production-readiness guarantee.
-
-The package remains private and `UNLICENSED`. The Nest framework's license does not select a license for Amani IA; see [the license decision](../../docs/LICENSE-DECISION.md).
+See [ADR-0036](../../docs/architecture/adr/0036-ai-orchestrator-grounded-knowledge-rag.md)
+and the [editable Mermaid flow](../../docs/architecture/diagrams/22-ai-orchestrator-grounded-knowledge-rag.mmd).

@@ -9,7 +9,7 @@
 - **ADR-0030** est une synthèse des décisions, pas une autorisation de remplacer les ADR spécialisés ni une preuve de déploiement.
 - Les diagrammes sont conçus **après** validation des ADR ; les images dans `../diagrams/` doivent illustrer les décisions sans inverser la source d’autorité.
 
-## Catalogue des 34 ADR
+## Catalogue des 36 ADR
 
 ### A. Fondations architecturales
 
@@ -75,6 +75,7 @@
 | 0033 | [ADR-0033 — Exécution asynchrone du traitement documentaire](./0033-document-processing-execution.md) | Accepté — validation manuelle requise |
 | 0034 | [ADR-0034 — Représentation traitée des documents Knowledge](./0034-document-processing-representation.md) | Accepté — validation manuelle requise |
 | 0035 | [ADR-0035 — Récupération Knowledge autorisée](./0035-authorization-aware-knowledge-retrieval.md) | Accepté — validation manuelle requise |
+| 0036 | [ADR-0036 — AI Orchestrator et RAG Knowledge fondé](./0036-ai-orchestrator-grounded-knowledge-rag.md) | Accepté — validation manuelle requise |
 
 ## Ordre de conception et de validation
 

@@ -1,0 +1,18 @@
+flowchart TD
+  User[Authenticated user] --> Gateway[Gateway verified context]
+  Gateway --> Orchestrator[AI Orchestrator]
+  Orchestrator --> Core[Core policy: Knowledge capability]
+  Orchestrator --> Knowledge[Knowledge secure retrieval\non behalf of requester]
+  Knowledge --> ACL[Core membership + Knowledge ACL scope]
+  ACL --> Evidence[Authorized evidence only]
+  Evidence --> Context[Bounded context builder\nE1 E2 ...]
+  Context --> Provider[Generation provider]
+  Provider --> Output[Structured answer + evidence IDs]
+  Output --> Citations[Citation validator\nserver-owned provenance]
+  Citations --> Answer[Grounded answer + citations]
+
+  Orchestrator -. forbidden .-> DirectDb[(Knowledge PostgreSQL)]
+  Orchestrator -. forbidden .-> Pgvector[(Direct pgvector query)]
+
+  Orchestrator --> KnowledgeTool[Knowledge tool: implemented]
+  Orchestrator -. future .-> AnalyticsTool[Data Analytics tool: future]
