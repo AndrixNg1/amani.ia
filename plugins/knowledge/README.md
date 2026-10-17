@@ -131,13 +131,25 @@ requires the `KNOWLEDGE_RETRIEVAL_EMBEDDING_*` profile to match chunks written b
 worker. Set the same provider/model/dimension/configuration version deliberately; never
 place an embedding API key in browser configuration.
 
+The generated local environment intentionally keeps service authentication disabled, so
+it cannot exercise retrieval. For a local retrieval test, enable development service
+authentication in the Core and Knowledge `.env` files. Core needs
+`CORE_SERVICE_AUTH_MODE=development`, its normal `DEVELOPMENT_SERVICE_SECRET`, and a
+distinct `KNOWLEDGE_CORE_DEVELOPMENT_SECRET`. Knowledge needs
+`KNOWLEDGE_SERVICE_AUTH_MODE=development`, a separate
+`KNOWLEDGE_DEVELOPMENT_SERVICE_SECRET` for the trusted caller, the same
+`KNOWLEDGE_CORE_DEVELOPMENT_SECRET`, and the document-processing secret. All values are
+server-only, 64-character lowercase hexadecimal strings; production identity remains an
+open architecture decision.
+
 ## Tests and next phase
 
 Retrieval unit tests use synthetic vectors and mocked Core/database/provider boundaries.
-They cover Core-before-query behavior, provenance mapping and controlled provider failures.
-Database integration validation must cover the SQL candidate scope: tenant and grant
-isolation, ready/current lifecycle, profile compatibility, ranking and top-K. Tests are
-**NOT RUN BY REQUEST**.
+They cover Core-before-query behavior, candidate SQL scope, provenance mapping and
+controlled provider failures. HTTP tests cover verified organization and signed
+Knowledge Base scope before the retrieval service is invoked. Database integration
+validation must cover tenant and grant isolation, ready/current lifecycle, profile
+compatibility, ranking and top-K. Tests are **NOT RUN BY REQUEST**.
 
 Phase 8 may add an AI Orchestrator that consumes this endpoint. It must not introduce a
 second retrieval engine or bypass this authorization boundary.
