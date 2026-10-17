@@ -74,6 +74,7 @@
 | 0032 | [ADR-0032 — Knowledge : ACL conservatrices et uploads versionnés](./0032-knowledge-access-uploads.md) | Accepté — validation manuelle requise |
 | 0033 | [ADR-0033 — Exécution asynchrone du traitement documentaire](./0033-document-processing-execution.md) | Accepté — validation manuelle requise |
 | 0034 | [ADR-0034 — Représentation traitée des documents Knowledge](./0034-document-processing-representation.md) | Accepté — validation manuelle requise |
+| 0035 | [ADR-0035 — Récupération Knowledge autorisée](./0035-authorization-aware-knowledge-retrieval.md) | Accepté — validation manuelle requise |
 
 ## Ordre de conception et de validation
 

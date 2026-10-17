@@ -7,6 +7,7 @@ import { verifyDatabaseIdentity } from './database';
 export const migrationFiles = [
   '0001_knowledge.sql',
   '0002_document_processing.sql',
+  '0003_secure_retrieval.sql',
 ] as const;
 export async function migrateInTransaction(db: Session) {
   await verifyDatabaseIdentity(db);
