@@ -13,6 +13,24 @@ import type { ResourcePolicy } from '../authorization/resource-policy';
 import type { RetrievalEmbeddingProvider } from './retrieval.embedding';
 import { RetrievalService } from './retrieval.service';
 
+jest.mock('../common/config', () => ({
+  knowledgeConfig: () => ({
+    retrieval: {
+      maxQueryCharacters: 2000,
+      defaultTopK: 6,
+      maxTopK: 20,
+      minSimilarityBps: 0,
+      embedding: {
+        provider: 'deterministic-test',
+        model: 'deterministic-v1',
+        dimension: 3,
+        configVersion: 1,
+        timeoutMs: 1000,
+      },
+    },
+  }),
+}));
+
 const organizationA = '00000000-0000-4000-8000-000000000010' as OrganizationId;
 const organizationB = '00000000-0000-4000-8000-000000000020' as OrganizationId;
 const actor: Actor = {
@@ -114,6 +132,20 @@ describe('secure Knowledge retrieval', () => {
         query: 'salary',
       }),
     ).rejects.toThrow('denied');
+    expect(embedding.embedQuery).not.toHaveBeenCalled();
+    expect(execute).not.toHaveBeenCalled();
+  });
+
+  it('rejects a top-K over the service maximum before Core or SQL is called', async () => {
+    const { service, policy, embedding, execute } = serviceWith();
+    await expect(
+      service.retrieve(actor, {
+        organizationId: organizationA,
+        query: 'salary',
+        topK: 21,
+      }),
+    ).rejects.toThrow('Bad Request');
+    expect(policy.coreAuthorize).not.toHaveBeenCalled();
     expect(embedding.embedQuery).not.toHaveBeenCalled();
     expect(execute).not.toHaveBeenCalled();
   });
