@@ -56,10 +56,9 @@ export class RetrievalService {
       throw new BadRequestException();
     const topK = request.topK ?? this.config.defaultTopK;
     if (topK > this.config.maxTopK) throw new BadRequestException();
-    const threshold = Math.max(
-      this.config.minSimilarityBps,
-      request.minSimilarityBps ?? 0,
-    ) / 10_000;
+    const threshold =
+      Math.max(this.config.minSimilarityBps, request.minSimilarityBps ?? 0) /
+      10_000;
     // Core revalidates membership, permission, entitlement and installation first.
     const core = await this.policy.coreAuthorize(
       actor,

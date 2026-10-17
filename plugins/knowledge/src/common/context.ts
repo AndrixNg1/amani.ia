@@ -111,13 +111,13 @@ export class TrustedIdentityGuard implements CanActivate {
     const candidate =
       request.params.organizationId ??
       request.query.organizationId ??
-      (request.body as { organizationId?: unknown } | undefined)?.organizationId;
+      (request.body as { organizationId?: unknown } | undefined)
+        ?.organizationId;
     return typeof candidate === 'string' ? candidate : undefined;
   }
   private requestResourceId(request: KnowledgeRequest): string | undefined {
     const body = request.body as
-      | { id?: unknown; knowledgeBaseId?: unknown }
-      | undefined;
+      { id?: unknown; knowledgeBaseId?: unknown } | undefined;
     const candidate =
       request.params.id ??
       request.params.knowledgeBaseId ??

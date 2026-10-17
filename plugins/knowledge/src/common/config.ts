@@ -184,18 +184,14 @@ export function knowledgeConfig(source: EnvironmentSource = process.env) {
       ),
       defaultTopK: retrievalDefaultTopK,
       maxTopK: retrievalMaxTopK,
-      minSimilarityBps: env.integer(
-        'KNOWLEDGE_RETRIEVAL_MIN_SIMILARITY_BPS',
-        {
-          default: 0,
-          min: 0,
-          max: 10000,
-        },
-      ),
+      minSimilarityBps: env.integer('KNOWLEDGE_RETRIEVAL_MIN_SIMILARITY_BPS', {
+        default: 0,
+        min: 0,
+        max: 10000,
+      }),
       embedding: {
         provider: retrievalEmbeddingProvider as
-          | 'openai-compatible'
-          | 'deterministic-test',
+          'openai-compatible' | 'deterministic-test',
         model: env.required('KNOWLEDGE_RETRIEVAL_EMBEDDING_MODEL'),
         dimension: env.integer('KNOWLEDGE_RETRIEVAL_EMBEDDING_DIMENSION', {
           min: 1,

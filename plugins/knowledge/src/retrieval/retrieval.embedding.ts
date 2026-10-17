@@ -77,7 +77,8 @@ export class RetrievalEmbeddingProvider {
       if (!response.ok) throw new ServiceUnavailableException();
       const body: unknown = await response.json();
       const embedding =
-        body && typeof body === 'object' &&
+        body &&
+        typeof body === 'object' &&
         Array.isArray((body as { data?: unknown }).data)
           ? ((body as { data: unknown[] }).data[0] as { embedding?: unknown })
               ?.embedding
