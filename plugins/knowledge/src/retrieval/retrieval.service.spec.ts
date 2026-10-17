@@ -1,4 +1,6 @@
 import type { KnowledgeAuthorizationResponse } from '@amani/contracts';
+import type { SQL } from 'drizzle-orm';
+import { PgDialect } from 'drizzle-orm/pg-core';
 import type {
   CorrelationId,
   OrganizationId,
@@ -114,6 +116,26 @@ describe('secure Knowledge retrieval', () => {
     ).rejects.toThrow('denied');
     expect(embedding.embedQuery).not.toHaveBeenCalled();
     expect(execute).not.toHaveBeenCalled();
+  });
+
+  it('constructs the vector query with authorization and lifecycle scope before ranking', async () => {
+    const { service, execute } = serviceWith();
+    await service.retrieve(actor, {
+      organizationId: organizationA,
+      knowledgeBaseId: '00000000-0000-4000-8000-000000000102',
+      query: 'compensation reviews',
+    });
+    const [statement] = execute.mock.calls[0] as [SQL];
+    const query = new PgDialect().sqlToQuery(statement);
+    expect(query.sql).toContain('c.organization_id=$');
+    expect(query.sql).toContain("b.status='active'");
+    expect(query.sql).toContain("v.processing_status='ready'");
+    expect(query.sql).toContain('current_version.document_id=v.document_id');
+    expect(query.sql).toContain('c.embedding_dimension=$');
+    expect(query.sql).toContain('knowledge.resource_grants base_grant');
+    expect(query.sql).toContain('knowledge.resource_grants document_grant');
+    expect(query.sql).toContain("d.access_mode='inherit'");
+    expect(query.sql).toContain('ORDER BY c.embedding <=>');
   });
 
   it('does not query chunks when compatible query embedding fails', async () => {
