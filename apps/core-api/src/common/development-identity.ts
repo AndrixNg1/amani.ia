@@ -16,6 +16,7 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
     private readonly secret: string,
     private readonly knowledgeSecret?: string,
     private readonly orchestratorSecret?: string,
+    private readonly dataAnalyticsSecret?: string,
   ) {
     super();
   }
@@ -47,11 +48,14 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
     const p = raw as Partial<DevelopmentDelegation>;
     const knowledge = p.callingService === '@amani/knowledge';
     const orchestrator = p.callingService === '@amani/ai-orchestrator';
+    const dataAnalytics = p.callingService === '@amani/data-analytics';
     const secret = knowledge
       ? this.knowledgeSecret
       : orchestrator
         ? this.orchestratorSecret
-        : this.secret;
+        : dataAnalytics
+          ? this.dataAnalyticsSecret
+          : this.secret;
     if (
       !secret ||
       (knowledge &&
@@ -64,7 +68,12 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
           p.method !== 'POST' ||
           p.scope?.action !== 'authorization.check' ||
           p.scope.resourceType !== 'policy' ||
-          p.scope.plugin !== 'knowledge'))
+          p.scope.plugin !== 'knowledge')) ||
+      (dataAnalytics &&
+        (p.path !== '/internal/data-analytics/authorization' ||
+          p.method !== 'POST' ||
+          p.scope?.action !== 'authorization.check' ||
+          p.scope.resourceType !== 'policy'))
     )
       return null;
     const expected = createHmac('sha256', Buffer.from(secret, 'hex'))
@@ -74,7 +83,10 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
     const now = Date.now();
     if (
       p.version !== 1 ||
-      (!knowledge && !orchestrator && p.callingService !== '@amani/gateway') ||
+      (!knowledge &&
+        !orchestrator &&
+        !dataAnalytics &&
+        p.callingService !== '@amani/gateway') ||
       p.audience !== '@amani/core-api' ||
       !isUUID(p.userId) ||
       (p.organizationId !== undefined && !isUUID(p.organizationId)) ||
@@ -160,6 +172,7 @@ export function identityVerifier(
     );
   const knowledgeSecret = source.KNOWLEDGE_CORE_DEVELOPMENT_SECRET;
   const orchestratorSecret = source.ORCHESTRATOR_CORE_DEVELOPMENT_SECRET;
+  const dataAnalyticsSecret = source.DATA_ANALYTICS_CORE_DEVELOPMENT_SECRET;
   if (
     knowledgeSecret !== undefined &&
     (!/^[a-f0-9]{64}$/.test(knowledgeSecret) || knowledgeSecret === secret)
@@ -178,9 +191,21 @@ export function identityVerifier(
       'ORCHESTRATOR_CORE_DEVELOPMENT_SECRET',
       'invalid_string',
     );
+  if (
+    dataAnalyticsSecret !== undefined &&
+    (!/^[a-f0-9]{64}$/.test(dataAnalyticsSecret) ||
+      dataAnalyticsSecret === secret ||
+      dataAnalyticsSecret === knowledgeSecret ||
+      dataAnalyticsSecret === orchestratorSecret)
+  )
+    throw new ConfigurationError(
+      'DATA_ANALYTICS_CORE_DEVELOPMENT_SECRET',
+      'invalid_string',
+    );
   return new DevelopmentIdentityVerifier(
     secret,
     knowledgeSecret,
     orchestratorSecret,
+    dataAnalyticsSecret,
   );
 }

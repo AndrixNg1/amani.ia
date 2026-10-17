@@ -205,3 +205,14 @@ export type {
   KnowledgeRagResponseV1,
   KnowledgeRagStatusV1,
 } from './rag';
+
+export type {
+  AnalysisOperation,
+  AnalysisScope,
+  DataAnalysisAuthorizationRequest,
+  DataAnalysisAuthorizationResponse,
+  DataAnalysisRequestedV1,
+  DataAnalysisResultMetadataV1,
+  DatasetColumnScope,
+  StructuredDataSourceReference,
+} from './analytics';
