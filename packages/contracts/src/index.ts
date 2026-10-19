@@ -10,7 +10,7 @@ import type {
   ResourceId,
   ServiceName,
   UserId,
-} from '@amani/types';
+} from "@amani/types";
 
 /** Established by an authentication provider, never by identity headers. */
 export interface AuthenticatedPrincipal {
@@ -26,21 +26,23 @@ export interface DevelopmentDelegation {
   readonly requestId: RequestId;
   readonly correlationId: CorrelationId;
   readonly callingService:
-    | '@amani/gateway'
-    | '@amani/ai-orchestrator'
-    | '@amani/knowledge'
-    | '@amani/document-processing';
+    | "@amani/gateway"
+    | "@amani/ai-orchestrator"
+    | "@amani/knowledge"
+    | "@amani/data-analytics"
+    | "@amani/document-processing";
   readonly audience:
-    | '@amani/core-api'
-    | '@amani/ai-orchestrator'
-    | '@amani/knowledge';
+    | "@amani/core-api"
+    | "@amani/ai-orchestrator"
+    | "@amani/knowledge"
+    | "@amani/data-analytics";
   readonly userId: UserId;
   readonly organizationId?: OrganizationId;
   readonly scope: AuthorizationScope;
   readonly issuedAt: number;
   readonly expiresAt: number;
   readonly nonce: string;
-  readonly method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  readonly method: "GET" | "POST" | "PATCH" | "DELETE";
   readonly path: string;
   readonly bodySha256: string;
 }
@@ -51,8 +53,12 @@ export interface CoreAuthorizationDecision {
   readonly organizationId: string;
   readonly userId: string;
   readonly permission: string;
-  readonly reason: 'ROLE_PERMISSION' | 'INACTIVE_CONTEXT' | 'MISSING_PERMISSION'
-    | 'PLUGIN_UNAVAILABLE' | 'WRONG_ORGANIZATION';
+  readonly reason:
+    | "ROLE_PERMISSION"
+    | "INACTIVE_CONTEXT"
+    | "MISSING_PERMISSION"
+    | "PLUGIN_UNAVAILABLE"
+    | "WRONG_ORGANIZATION";
 }
 export interface CoreEffectivePermissions {
   readonly organizationId: string;
@@ -63,7 +69,7 @@ export interface CoreOrganization {
   readonly id: string;
   readonly name: string;
   readonly slug: string;
-  readonly status: 'draft' | 'provisioning' | 'active' | 'failed' | 'suspended';
+  readonly status: "draft" | "provisioning" | "active" | "failed" | "suspended";
   readonly createdAt: IsoTimestamp;
   readonly updatedAt: IsoTimestamp;
 }
@@ -71,7 +77,7 @@ export interface CoreUser {
   readonly id: string;
   readonly email: string;
   readonly displayName: string;
-  readonly status: 'active' | 'suspended';
+  readonly status: "active" | "suspended";
   readonly createdAt: IsoTimestamp;
   readonly updatedAt: IsoTimestamp;
 }
@@ -79,7 +85,7 @@ export interface CoreMembership {
   readonly id: string;
   readonly organizationId: string;
   readonly userId: string;
-  readonly status: 'active' | 'inactive';
+  readonly status: "active" | "inactive";
   readonly joinedAt: IsoTimestamp;
   readonly createdAt: IsoTimestamp;
   readonly updatedAt: IsoTimestamp;
@@ -145,7 +151,7 @@ export interface ErrorEnvelope {
 
 /** Matches the existing process-liveness route. No readiness or security claim. */
 export interface HealthResponse {
-  readonly status: 'ok';
+  readonly status: "ok";
   readonly service: ServiceName;
 }
 
@@ -196,7 +202,7 @@ export type {
   KnowledgeDocumentProcessingFailureV1,
   KnowledgeRetrievalResultV1,
   KnowledgeRetrievalResponseV1,
-} from './knowledge';
+} from "./knowledge";
 
 export type {
   KnowledgeRagCitationV1,
@@ -204,4 +210,15 @@ export type {
   KnowledgeRagRequestV1,
   KnowledgeRagResponseV1,
   KnowledgeRagStatusV1,
-} from './rag';
+} from "./rag";
+
+export type {
+  AnalysisOperation,
+  AnalysisScope,
+  DataAnalysisAuthorizationRequest,
+  DataAnalysisAuthorizationResponse,
+  DataAnalysisRequestedV1,
+  DataAnalysisResultMetadataV1,
+  DatasetColumnScope,
+  StructuredDataSourceReference,
+} from "./analytics";

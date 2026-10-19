@@ -15,7 +15,7 @@ Eleven projects have a `package.json` and application source: three Next.js fron
 | Core API | `@amani/core-api` | NestJS / TypeScript | 4001 | Identity, organizations, membership, and permissions |
 | AI Orchestrator | `@amani/ai-orchestrator` | NestJS / TypeScript | 4002 | AI workflows using authorized Plugin API data |
 | Knowledge | `@amani/knowledge` | NestJS / TypeScript | 4101 | Knowledge ingestion and retrieval |
-| Data analytics | `@amani/data-analytics` | NestJS / TypeScript | 4102 | Dataset queries and analysis |
+| Data analytics | `@amani/data-analytics` | NestJS / TypeScript | 4102 | Structured-source metadata, private uploads and constrained analysis intent |
 | Conversations | `@amani/conversations` | NestJS / TypeScript | 4103 | Conversation history and access |
 | Connectors | `@amani/connectors` | NestJS / TypeScript | 4104 | External source connections |
 | Evaluation | `@amani/evaluation` | NestJS / TypeScript | 4105 | AI evaluation workflows |
@@ -70,7 +70,8 @@ These containers support future relational/vector storage, queues/cache, and obj
 | Shared packages | Four implemented packages |
 | Core/Gateway integration tests | Dedicated HTTP and PostgreSQL suites; commands in component READMEs |
 | Knowledge document processing | Current: queue, worker, extraction, normalization, chunks and embeddings; manual validation pending |
-| OCR, connectors, Data Analytics and hybrid orchestration | Not implemented |
+| Data Analytics structured-data foundation | Implemented; manual validation pending; Python execution remains Phase 10 |
+| OCR, connectors and hybrid orchestration | Not implemented |
 
 Production authentication, deployment and plugin resource controls remain open. See [Gateway](../../apps/gateway/README.md) and [Core](../../apps/core-api/README.md) for implemented behavior and validation commands.
 

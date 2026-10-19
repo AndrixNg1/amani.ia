@@ -92,4 +92,12 @@ export async function seedDevelopment(db: Session) {
         .values({ planId: plan.id, capability: `plugin:${entry.key}` })
         .onConflictDoNothing();
   }
+  await db
+    .insert(permissions)
+    .values({
+      key: 'analytics.datasets.analyze',
+      description: 'Run bounded analysis requests against authorized datasets',
+      pluginKey: 'data-analytics',
+    })
+    .onConflictDoNothing();
 }

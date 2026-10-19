@@ -74,3 +74,18 @@ export class KnowledgeAuthorizationDto {
   permission!: 'knowledge.documents.read' | 'plugins.use' | 'plugins.manage';
   @IsOptional() @IsUUID() subjectMembershipId?: string;
 }
+export class DataAnalyticsAuthorizationDto {
+  @IsUUID() organizationId!: string;
+  @IsIn([
+    'analytics.datasets.read',
+    'analytics.datasets.analyze',
+    'plugins.use',
+    'plugins.manage',
+  ])
+  permission!:
+    | 'analytics.datasets.read'
+    | 'analytics.datasets.analyze'
+    | 'plugins.use'
+    | 'plugins.manage';
+  @IsOptional() @IsUUID() subjectMembershipId?: string;
+}

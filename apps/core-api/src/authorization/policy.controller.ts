@@ -1,6 +1,9 @@
 import { sql } from 'drizzle-orm';
 import { DatabaseService } from '../database/database';
-import type { KnowledgeAuthorizationResponse } from '@amani/contracts';
+import type {
+  DataAnalysisAuthorizationResponse,
+  KnowledgeAuthorizationResponse,
+} from '@amani/contracts';
 import {
   Body,
   ForbiddenException,
@@ -15,6 +18,7 @@ import { CurrentActor, Operation } from '../common/context';
 import type { Actor } from '../common/context';
 import {
   AuthorizationCheckDto,
+  DataAnalyticsAuthorizationDto,
   KnowledgeAuthorizationDto,
   OrganizationQuery,
   PluginKeyParam,
@@ -42,6 +46,46 @@ export class PolicyController {
         body.organizationId,
         body.permission,
         'knowledge',
+        tx,
+      );
+      if (!decision.allowed) throw new ForbiddenException();
+      const current = await tx.execute<{ id: string }>(sql`
+        SELECT id FROM core_platform.memberships WHERE organization_id = ${body.organizationId}
+        AND user_id = ${actor.userId} AND status = 'active'`);
+      if (!current.rows[0]) throw new ForbiddenException();
+      if (body.subjectMembershipId) {
+        if (body.permission !== 'plugins.manage')
+          throw new ForbiddenException();
+        const subject = await tx.execute<{ id: string }>(sql`
+          SELECT m.id FROM core_platform.memberships m
+          JOIN core_platform.users u ON u.id = m.user_id AND u.status = 'active'
+          WHERE m.organization_id = ${body.organizationId} AND m.id = ${body.subjectMembershipId}
+          AND m.status = 'active'`);
+        if (!subject.rows[0]) throw new ForbiddenException();
+      }
+      return {
+        decision,
+        membershipId: current.rows[0].id,
+        ...(body.subjectMembershipId
+          ? { subjectMembershipId: body.subjectMembershipId }
+          : {}),
+      };
+    });
+  }
+  /** Policy projection for Data Analytics, never dataset or ACL ownership. */
+  @Post('data-analytics/authorization')
+  @Operation('authorization.check', 'policy')
+  async dataAnalytics(
+    @CurrentActor() actor: Actor,
+    @Body() body: DataAnalyticsAuthorizationDto,
+  ): Promise<DataAnalysisAuthorizationResponse> {
+    return this.database.transaction(async (tx) => {
+      await this.policy.lockOrganization(tx, body.organizationId);
+      const decision = await this.policy.check(
+        actor,
+        body.organizationId,
+        body.permission,
+        'data-analytics',
         tx,
       );
       if (!decision.allowed) throw new ForbiddenException();

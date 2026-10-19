@@ -103,7 +103,7 @@ export function configureHttp(app: INestApplication) {
       if (
         !origin ||
         typeof method !== 'string' ||
-        !['GET', 'POST'].includes(method) ||
+        !['GET', 'POST', 'PATCH', 'DELETE'].includes(method) ||
         (typeof headers === 'string' &&
           !headers
             .toLowerCase()
@@ -121,7 +121,7 @@ export function configureHttp(app: INestApplication) {
         return;
       }
       res.vary('Access-Control-Request-Headers');
-      res.setHeader('access-control-allow-methods', 'GET,POST');
+      res.setHeader('access-control-allow-methods', 'GET,POST,PATCH,DELETE');
       res.setHeader(
         'access-control-allow-headers',
         'authorization,content-type,x-correlation-id,x-request-id',

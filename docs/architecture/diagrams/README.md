@@ -62,6 +62,7 @@ Use the diagram links to open the full-resolution PNG. The preview column provid
 | [20 Document processing](./20-document-processing.mmd) | Worker lifecycle and bounded internal publication | ADR-0033–0034 |
 | [21 Secure Knowledge retrieval](./21-secure-knowledge-retrieval.mmd) | Authorization before pgvector retrieval; evidence only | ADR-0035 |
 | [22 AI Orchestrator grounded Knowledge RAG](./22-ai-orchestrator-grounded-knowledge-rag.mmd) | Delegated requester, bounded evidence, structured output and server-owned citations | ADR-0036 |
+| [23 Structured Data Analytics](./23-structured-data-analytics.mmd) | Dataset metadata, local ACL, private versioned uploads and constrained analysis intent; Python execution remains Phase 10 | ADR-0037 |
 
 ## How to read these visuals
 

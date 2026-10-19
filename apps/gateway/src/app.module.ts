@@ -18,10 +18,12 @@ import { SafeLogger } from './common/logging';
 import { PlatformController } from './routing/platform.controller';
 import { AiController } from './routing/ai.controller';
 import { OrchestratorClient } from './orchestrator-client/orchestrator.client';
+import { DataAnalyticsClient } from './data-analytics-client/data-analytics.client';
+import { DataAnalyticsController } from './routing/data-analytics.controller';
 
 @Module({
   imports: [],
-  controllers: [AppController, PlatformController, AiController],
+  controllers: [AppController, PlatformController, AiController, DataAnalyticsController],
   providers: [
     AppService,
     { provide: GATEWAY_CONFIG, useFactory: () => gatewayConfig() },
@@ -37,6 +39,7 @@ import { OrchestratorClient } from './orchestrator-client/orchestrator.client';
     },
     CoreClient,
     OrchestratorClient,
+    DataAnalyticsClient,
     RateLimiter,
     SafeLogger,
     { provide: APP_GUARD, useClass: AuthenticationGuard },
