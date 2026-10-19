@@ -38,9 +38,7 @@ export function analyticsConfig(source: EnvironmentSource = process.env) {
   if (
     authMode === 'development' &&
     (!['development', 'test'].includes(environment) ||
-      !['127.0.0.1', '::1', 'localhost'].includes(
-        source.HOST ?? '127.0.0.1',
-      ))
+      !['127.0.0.1', '::1', 'localhost'].includes(source.HOST ?? '127.0.0.1'))
   )
     throw new ConfigurationError(
       'DATA_ANALYTICS_SERVICE_AUTH_MODE',

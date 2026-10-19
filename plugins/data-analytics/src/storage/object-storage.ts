@@ -38,11 +38,14 @@ export class ObjectStorage {
   });
   async assertReady(): Promise<void> {
     try {
-      await this.client.send(new HeadBucketCommand({ Bucket: this.config.bucket }));
+      await this.client.send(
+        new HeadBucketCommand({ Bucket: this.config.bucket }),
+      );
       const versioning = await this.client.send(
         new GetBucketVersioningCommand({ Bucket: this.config.bucket }),
       );
-      if (versioning.Status !== 'Enabled') throw new Error('Bucket versioning is required');
+      if (versioning.Status !== 'Enabled')
+        throw new Error('Bucket versioning is required');
     } catch {
       throw new ServiceUnavailableException();
     }
@@ -83,6 +86,7 @@ export class ObjectStorage {
       const contentLength = object.ContentLength;
       if (
         !object.ContentType ||
+        typeof contentLength !== 'number' ||
         !Number.isSafeInteger(contentLength) ||
         contentLength < 1 ||
         !object.VersionId

@@ -28,7 +28,10 @@ describe('AppController', () => {
 
   it('reports readiness only after database and private storage checks', async () => {
     await expect(appController.getReadiness()).resolves.toEqual({
-      status: 'ok', service: '@amani/data-analytics', database: 'ready', storage: 'ready',
+      status: 'ok',
+      service: '@amani/data-analytics',
+      database: 'ready',
+      storage: 'ready',
     });
   });
 });

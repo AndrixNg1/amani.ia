@@ -365,14 +365,23 @@ export class DataAnalyticsController {
     datasetId: string,
     body?: object,
   ) {
-    const action = operation.includes('.read') || operation.includes('.list')
-      ? 'analytics.datasets.read'
-      : 'analytics.datasets.manage';
-    return this.forward(context, operation, method, path, organizationId, {
-      action,
-      resourceType: 'dataset',
-      resourceId: this.resourceId(datasetId),
-    }, body);
+    const action =
+      operation.includes('.read') || operation.includes('.list')
+        ? 'analytics.datasets.read'
+        : 'analytics.datasets.manage';
+    return this.forward(
+      context,
+      operation,
+      method,
+      path,
+      organizationId,
+      {
+        action,
+        resourceType: 'dataset',
+        resourceId: this.resourceId(datasetId),
+      },
+      body,
+    );
   }
 
   private datasetAccess(
@@ -384,10 +393,18 @@ export class DataAnalyticsController {
     datasetId: string,
     body?: object,
   ) {
-    return this.forward(context, operation, method, path, organizationId, {
-      action: 'analytics.access.manage',
-      resourceType: 'dataset',
-      resourceId: this.resourceId(datasetId),
-    }, body);
+    return this.forward(
+      context,
+      operation,
+      method,
+      path,
+      organizationId,
+      {
+        action: 'analytics.access.manage',
+        resourceType: 'dataset',
+        resourceId: this.resourceId(datasetId),
+      },
+      body,
+    );
   }
 }

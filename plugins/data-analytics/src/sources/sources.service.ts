@@ -11,8 +11,16 @@ export class SourcesService {
     private readonly database: DatabaseService,
     private readonly policy: ResourcePolicy,
   ) {}
-  async createConnector(actor: Actor, organizationId: string, dto: CreateConnectorSourceDto) {
-    const authorization = await this.policy.coreAuthorize(actor, organizationId, 'manage');
+  async createConnector(
+    actor: Actor,
+    organizationId: string,
+    dto: CreateConnectorSourceDto,
+  ) {
+    const authorization = await this.policy.coreAuthorize(
+      actor,
+      organizationId,
+      'manage',
+    );
     const result = await this.database.db.execute(sql`
       INSERT INTO data_analytics.data_sources(organization_id,source_kind,provider,display_name,connector_reference,created_by_membership_id)
       VALUES(${organizationId},'connector',${dto.provider},${dto.displayName.trim()},${dto.connectorReference},${authorization.membershipId})
@@ -21,9 +29,11 @@ export class SourcesService {
   }
   async list(actor: Actor, organizationId: string) {
     await this.policy.coreAuthorize(actor, organizationId, 'manage');
-    return (await this.database.db.execute(sql`
+    return (
+      await this.database.db.execute(sql`
       SELECT id,source_kind AS "sourceKind",provider,display_name AS "displayName",connector_reference AS "connectorReference",status,created_at AS "createdAt"
-      FROM data_analytics.data_sources WHERE organization_id=${organizationId} AND status <> 'archived' ORDER BY created_at DESC`)).rows;
+      FROM data_analytics.data_sources WHERE organization_id=${organizationId} AND status <> 'archived' ORDER BY created_at DESC`)
+    ).rows;
   }
   async get(actor: Actor, organizationId: string, id: string) {
     await this.policy.coreAuthorize(actor, organizationId, 'manage');

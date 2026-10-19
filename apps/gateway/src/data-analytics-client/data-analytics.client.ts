@@ -68,7 +68,10 @@ export class DataAnalyticsClient {
         throw new HttpException('Data Analytics request failed', mapped);
       }
       const text = await response.text();
-      if (Buffer.byteLength(text, 'utf8') > this.config.dataAnalyticsMaxResponseBytes)
+      if (
+        Buffer.byteLength(text, 'utf8') >
+        this.config.dataAnalyticsMaxResponseBytes
+      )
         throw new BadGatewayException();
       let parsed: unknown;
       try {

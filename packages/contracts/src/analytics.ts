@@ -1,16 +1,16 @@
-import type { CoreAuthorizationDecision, JobMetadata } from './index';
+import type { CoreAuthorizationDecision, JobMetadata } from "./index";
 
 /** Opaque structured-source provenance. It deliberately contains no credentials. */
 export interface StructuredDataSourceReference {
-  readonly sourceKind: 'manual_upload' | 'connector';
+  readonly sourceKind: "manual_upload" | "connector";
   readonly provider:
-    | 'csv'
-    | 'xlsx'
-    | 'postgresql'
-    | 'mysql'
-    | 'sqlserver'
-    | 'warehouse'
-    | 'other';
+    | "csv"
+    | "xlsx"
+    | "postgresql"
+    | "mysql"
+    | "sqlserver"
+    | "warehouse"
+    | "other";
   /** Connectors-owned opaque reference; never a connection string or secret. */
   readonly connectorReference?: string;
 }
@@ -18,10 +18,10 @@ export interface StructuredDataSourceReference {
 export interface DataAnalysisAuthorizationRequest {
   readonly organizationId: string;
   readonly permission:
-    | 'analytics.datasets.read'
-    | 'analytics.datasets.analyze'
-    | 'plugins.use'
-    | 'plugins.manage';
+    | "analytics.datasets.read"
+    | "analytics.datasets.analyze"
+    | "plugins.use"
+    | "plugins.manage";
   /** Only a plugins.manage caller may resolve a membership recipient. */
   readonly subjectMembershipId?: string;
 }
@@ -33,19 +33,19 @@ export interface DataAnalysisAuthorizationResponse {
 }
 
 export type AnalysisOperation =
-  | 'profile'
-  | 'describe'
-  | 'aggregate'
-  | 'group'
-  | 'filter'
-  | 'correlation'
-  | 'chart_data';
+  | "profile"
+  | "describe"
+  | "aggregate"
+  | "group"
+  | "filter"
+  | "correlation"
+  | "chart_data";
 
 /** Server-derived effective scope. Callers and future models never author this. */
 export interface DatasetColumnScope {
   readonly tableId: string;
   readonly columnId: string;
-  readonly access: 'allowed' | 'blocked';
+  readonly access: "allowed" | "blocked";
 }
 
 export interface AnalysisScope {
@@ -60,7 +60,7 @@ export interface AnalysisScope {
  * It is not a BullMQ payload and excludes credentials, data rows and authorization grants.
  */
 export interface DataAnalysisRequestedV1 {
-  readonly type: 'data-analytics.analysis.requested';
+  readonly type: "data-analytics.analysis.requested";
   readonly version: 1;
   readonly job: JobMetadata;
   readonly organizationId: string;
@@ -74,13 +74,13 @@ export interface DataAnalysisRequestedV1 {
 
 /** Metadata only. Large structured results and artifacts are not stored inline. */
 export interface DataAnalysisResultMetadataV1 {
-  readonly type: 'data-analytics.analysis.result';
+  readonly type: "data-analytics.analysis.result";
   readonly version: 1;
   readonly id: string;
   readonly organizationId: string;
   readonly analysisRequestId: string;
-  readonly status: 'pending' | 'ready' | 'failed' | 'expired';
-  readonly resultType: 'metadata' | 'table' | 'chart_data' | 'artifact';
+  readonly status: "pending" | "ready" | "failed" | "expired";
+  readonly resultType: "metadata" | "table" | "chart_data" | "artifact";
   readonly artifactReference: string | null;
   readonly expiresAt: string | null;
 }

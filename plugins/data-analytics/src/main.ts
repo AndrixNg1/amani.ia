@@ -17,6 +17,8 @@ async function bootstrap() {
 }
 
 bootstrap().catch(() => {
-  console.error('Data Analytics startup failed. Check environment and dependencies.');
+  console.error(
+    'Data Analytics startup failed. Check environment and dependencies.',
+  );
   process.exitCode = 1;
 });

@@ -94,7 +94,8 @@ export class PolicyController {
         AND user_id = ${actor.userId} AND status = 'active'`);
       if (!current.rows[0]) throw new ForbiddenException();
       if (body.subjectMembershipId) {
-        if (body.permission !== 'plugins.manage') throw new ForbiddenException();
+        if (body.permission !== 'plugins.manage')
+          throw new ForbiddenException();
         const subject = await tx.execute<{ id: string }>(sql`
           SELECT m.id FROM core_platform.memberships m
           JOIN core_platform.users u ON u.id = m.user_id AND u.status = 'active'

@@ -26,7 +26,12 @@ export class AppController {
 
   @Get('health/ready')
   @Public()
-  async getReadiness(): Promise<{ status: 'ok'; service: string; database: 'ready'; storage: 'ready' }> {
+  async getReadiness(): Promise<{
+    status: 'ok';
+    service: string;
+    database: 'ready';
+    storage: 'ready';
+  }> {
     try {
       await this.database.ready();
       await this.storage.assertReady();

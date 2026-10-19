@@ -16,14 +16,18 @@ export class OrganizationQuery {
   @IsUUID() organizationId!: string;
 }
 export class IdempotencyDto {
-  @IsString() @Length(8, 128) @Matches(/^[A-Za-z0-9._:-]+$/)
+  @IsString()
+  @Length(8, 128)
+  @Matches(/^[A-Za-z0-9._:-]+$/)
   idempotencyKey!: string;
 }
 export class CreateConnectorSourceDto {
   @IsIn(['postgresql', 'mysql', 'sqlserver', 'warehouse', 'other'])
   provider!: 'postgresql' | 'mysql' | 'sqlserver' | 'warehouse' | 'other';
   @IsString() @Length(1, 120) @Matches(/\S/) displayName!: string;
-  @IsString() @Length(1, 255) @Matches(/^\S+$/)
+  @IsString()
+  @Length(1, 255)
+  @Matches(/^\S+$/)
   connectorReference!: string;
 }
 export class CreateDatasetDto {
@@ -51,7 +55,15 @@ export class GrantDto {
 export class CreateAnalysisRequestDto extends IdempotencyDto {
   @IsUUID() datasetId!: string;
   @IsUUID() datasetVersionId!: string;
-  @IsIn(['profile', 'describe', 'aggregate', 'group', 'filter', 'correlation', 'chart_data'])
+  @IsIn([
+    'profile',
+    'describe',
+    'aggregate',
+    'group',
+    'filter',
+    'correlation',
+    'chart_data',
+  ])
   operation!:
     | 'profile'
     | 'describe'

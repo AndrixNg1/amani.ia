@@ -14,6 +14,8 @@ async function main() {
   }
 }
 void main().catch(() => {
-  console.error('Data Analytics database command failed. Check configuration and database state.');
+  console.error(
+    'Data Analytics database command failed. Check configuration and database state.',
+  );
   process.exitCode = 1;
 });

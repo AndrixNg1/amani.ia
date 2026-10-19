@@ -25,7 +25,13 @@ function validDecision(value: unknown): value is CoreAuthorizationDecision {
     typeof decision.userId === 'string' &&
     isUUID(decision.userId) &&
     typeof decision.permission === 'string' &&
-    ['ROLE_PERMISSION', 'INACTIVE_CONTEXT', 'MISSING_PERMISSION', 'PLUGIN_UNAVAILABLE', 'WRONG_ORGANIZATION'].includes(decision.reason as string)
+    [
+      'ROLE_PERMISSION',
+      'INACTIVE_CONTEXT',
+      'MISSING_PERMISSION',
+      'PLUGIN_UNAVAILABLE',
+      'WRONG_ORGANIZATION',
+    ].includes(decision.reason as string)
   );
 }
 export function isDataAnalysisAuthorizationResponse(
@@ -74,7 +80,10 @@ export class CorePolicyClient {
       .update(encoded)
       .digest('hex');
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.config.coreTimeoutMs);
+    const timer = setTimeout(
+      () => controller.abort(),
+      this.config.coreTimeoutMs,
+    );
     try {
       const response = await fetch(
         new URL('/internal/data-analytics/authorization', this.config.coreUrl),

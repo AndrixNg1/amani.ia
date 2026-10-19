@@ -42,7 +42,10 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
     const p = raw as Partial<DevelopmentDelegation>;
     if (p.callingService !== '@amani/gateway') return null;
-    const expected = createHmac('sha256', Buffer.from(this.gatewaySecret, 'hex'))
+    const expected = createHmac(
+      'sha256',
+      Buffer.from(this.gatewaySecret, 'hex'),
+    )
       .update(encoded)
       .digest();
     if (!timingSafeEqual(expected, Buffer.from(signature, 'hex'))) return null;
@@ -69,7 +72,9 @@ export class DevelopmentIdentityVerifier extends IdentityVerifier {
       p.path !== request.originalUrl ||
       typeof p.bodySha256 !== 'string' ||
       p.bodySha256 !==
-        createHash('sha256').update(request.rawBody ?? '').digest('hex') ||
+        createHash('sha256')
+          .update(request.rawBody ?? '')
+          .digest('hex') ||
       !p.scope ||
       typeof p.scope !== 'object' ||
       Array.isArray(p.scope) ||

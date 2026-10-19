@@ -14,7 +14,9 @@ describe('ResourcePolicy', () => {
   it('denies a dataset when Core allows the operation but no local grant exists', async () => {
     const execute = jest
       .fn()
-      .mockResolvedValueOnce({ rows: [{ dataset_id: '00000000-0000-4000-8000-000000000010' }] })
+      .mockResolvedValueOnce({
+        rows: [{ dataset_id: '00000000-0000-4000-8000-000000000010' }],
+      })
       .mockResolvedValueOnce({ rows: [{ exists: false }] });
     const database = { db: { execute } } as unknown as DatabaseService;
     const core = {
