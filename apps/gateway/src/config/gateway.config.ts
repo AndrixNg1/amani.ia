@@ -63,6 +63,23 @@ export function gatewayConfig(source: EnvironmentSource = process.env) {
   ) {
     throw new ConfigurationError('ORCHESTRATOR_API_BASE_URL', 'invalid_url');
   }
+  const analyticsUrl = new URL(
+    env.url('DATA_ANALYTICS_API_BASE_URL', {
+      default: production
+        ? 'https://data-analytics.example.invalid'
+        : 'http://127.0.0.1:4102',
+    }),
+  );
+  if (
+    analyticsUrl.username ||
+    analyticsUrl.password ||
+    analyticsUrl.search ||
+    analyticsUrl.hash ||
+    analyticsUrl.pathname !== '/' ||
+    (production && analyticsUrl.protocol !== 'https:')
+  ) {
+    throw new ConfigurationError('DATA_ANALYTICS_API_BASE_URL', 'invalid_url');
+  }
   const authMode = source.GATEWAY_AUTH_MODE ?? 'disabled';
   const serviceMode = source.GATEWAY_SERVICE_AUTH_MODE ?? 'disabled';
   for (const [key, mode] of [
@@ -77,7 +94,8 @@ export function gatewayConfig(source: EnvironmentSource = process.env) {
         !['development', 'test'].includes(source.NODE_ENV ?? '') ||
         !local(host) ||
         !local(coreUrl.hostname) ||
-        !local(orchestratorUrl.hostname))
+        !local(orchestratorUrl.hostname) ||
+        !local(analyticsUrl.hostname))
     ) {
       throw new ConfigurationError(key, 'invalid_environment');
     }
@@ -130,6 +148,7 @@ export function gatewayConfig(source: EnvironmentSource = process.env) {
     port,
     coreBaseUrl: coreUrl.origin,
     orchestratorBaseUrl: orchestratorUrl.origin,
+    dataAnalyticsBaseUrl: analyticsUrl.origin,
     coreTimeoutMs: env.integer('CORE_API_TIMEOUT_MS', {
       default: 3000,
       min: 10,
@@ -147,6 +166,15 @@ export function gatewayConfig(source: EnvironmentSource = process.env) {
     }),
     orchestratorMaxResponseBytes: env.integer(
       'ORCHESTRATOR_API_MAX_RESPONSE_BYTES',
+      { default: 262144, min: 256, max: 1048576 },
+    ),
+    dataAnalyticsTimeoutMs: env.integer('DATA_ANALYTICS_API_TIMEOUT_MS', {
+      default: 10000,
+      min: 100,
+      max: 30000,
+    }),
+    dataAnalyticsMaxResponseBytes: env.integer(
+      'DATA_ANALYTICS_API_MAX_RESPONSE_BYTES',
       { default: 262144, min: 256, max: 1048576 },
     ),
     bodyLimitBytes: env.integer('GATEWAY_BODY_LIMIT_BYTES', {

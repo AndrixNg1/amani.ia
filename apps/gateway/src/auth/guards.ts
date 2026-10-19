@@ -21,7 +21,7 @@ export const AuthenticatedOnly = () =>
   SetMetadata('gateway.authenticatedOnly', true);
 export const RequirePermission = (permission: string) =>
   SetMetadata('gateway.permission', permission);
-export const RequirePluginUse = (plugin: 'knowledge') =>
+export const RequirePluginUse = (plugin: 'knowledge' | 'data-analytics') =>
   SetMetadata('gateway.pluginUse', plugin);
 @Injectable()
 export class AuthenticationGuard implements CanActivate {
@@ -89,10 +89,9 @@ export class AuthorizationGuard implements CanActivate {
       'gateway.permission',
       context.getHandler(),
     );
-    const plugin = this.reflector.get<'knowledge'>(
-      'gateway.pluginUse',
-      context.getHandler(),
-    );
+    const plugin = this.reflector.getAllAndOverride<
+      'knowledge' | 'data-analytics'
+    >('gateway.pluginUse', [context.getHandler(), context.getClass()]);
     const requiredPermission = plugin ? 'plugins.use' : permission;
     if (!requiredPermission) {
       // Unscoped routes rely on Core's own self/onboarding policy. An organization

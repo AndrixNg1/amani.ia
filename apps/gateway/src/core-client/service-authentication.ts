@@ -9,8 +9,8 @@ import type { RequestContext } from '../common/context';
 import type { GatewayConfig } from '../config/gateway.config';
 
 export interface ServiceCall {
-  audience: '@amani/core-api' | '@amani/ai-orchestrator';
-  method: 'GET' | 'POST';
+  audience: '@amani/core-api' | '@amani/ai-orchestrator' | '@amani/data-analytics';
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   path: string;
   body: string;
   scope: AuthorizationScope;
