@@ -23,7 +23,11 @@ Manual uploads receive a short-lived S3-compatible POST target for one opaque ob
 key, exact media type and exact content length. The bucket must be private and
 versioned. Finalization verifies object metadata and records a pinned version/checksum;
 no permanent object URL is returned. Connector sources hold an opaque reference only,
-never connection credentials or a live connection.
+never connection credentials or a live connection. Future database connectors must use
+read-only accounts with explicit database, schema, table/view and column boundaries,
+plus TLS where available. The Connectors domain owns those secrets and connection rules.
+Future previews and CSV exports must treat spreadsheet formula-like cells as untrusted;
+this phase exposes neither previews nor exports.
 
 See [ADR-0037](../../docs/architecture/adr/0037-structured-data-analytics.md) and the
 [editable architecture diagram](../../docs/architecture/diagrams/23-structured-data-analytics.mmd).

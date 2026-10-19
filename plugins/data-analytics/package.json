@@ -23,7 +23,9 @@
     "dev": "npm run start:dev",
     "lint:check": "eslint \"{src,apps,libs,test}/**/*.ts\" --max-warnings=0",
     "typecheck": "tsc --noEmit --incremental false",
-    "db:migrate": "ts-node src/database/cli.ts migrate"
+    "predb:migrate": "npm run build:shared",
+    "db:migrate": "ts-node src/database/cli.ts migrate",
+    "prestart:dev": "npm run build:shared"
   },
   "dependencies": {
     "@amani/config": "0.1.0",
