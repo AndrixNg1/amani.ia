@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -14,7 +15,7 @@ import { CurrentContext } from '../common/context';
 import type { RequestContext } from '../common/context';
 import { DataAnalyticsClient } from '../data-analytics-client/data-analytics.client';
 
-type Method = 'GET' | 'POST' | 'PATCH';
+type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 
 @Controller('api/analytics/organizations/:organizationId')
 @RequirePluginUse('data-analytics')
@@ -194,6 +195,57 @@ export class DataAnalyticsController {
     );
   }
 
+  @Get('datasets/:id/access')
+  listDatasetAccess(
+    @CurrentContext() context: RequestContext,
+    @Param('organizationId', ParseUUIDPipe) organizationId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.datasetAccess(
+      context,
+      'analytics.access.list',
+      'GET',
+      `/datasets/${id}/access`,
+      organizationId,
+      id,
+    );
+  }
+
+  @Post('datasets/:id/access')
+  grantDatasetAccess(
+    @CurrentContext() context: RequestContext,
+    @Param('organizationId', ParseUUIDPipe) organizationId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: object,
+  ) {
+    return this.datasetAccess(
+      context,
+      'analytics.access.grant',
+      'POST',
+      `/datasets/${id}/access`,
+      organizationId,
+      id,
+      body,
+    );
+  }
+
+  @Delete('datasets/:id/access/:grantId')
+  revokeDatasetAccess(
+    @CurrentContext() context: RequestContext,
+    @Param('organizationId', ParseUUIDPipe) organizationId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('grantId', ParseUUIDPipe) grantId: string,
+  ) {
+    return this.datasetAccess(
+      context,
+      'analytics.access.revoke',
+      'DELETE',
+      `/datasets/${id}/access/${grantId}`,
+      organizationId,
+      id,
+    );
+  }
+
   @Get('datasets/:datasetId/tables')
   tables(
     @CurrentContext() context: RequestContext,
@@ -318,6 +370,22 @@ export class DataAnalyticsController {
       : 'analytics.datasets.manage';
     return this.forward(context, operation, method, path, organizationId, {
       action,
+      resourceType: 'dataset',
+      resourceId: this.resourceId(datasetId),
+    }, body);
+  }
+
+  private datasetAccess(
+    context: RequestContext,
+    operation: string,
+    method: 'GET' | 'POST' | 'DELETE',
+    path: string,
+    organizationId: string,
+    datasetId: string,
+    body?: object,
+  ) {
+    return this.forward(context, operation, method, path, organizationId, {
+      action: 'analytics.access.manage',
       resourceType: 'dataset',
       resourceId: this.resourceId(datasetId),
     }, body);
